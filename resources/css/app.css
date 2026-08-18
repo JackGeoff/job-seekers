@@ -7,3 +7,69 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+@layer base {
+    [x-cloak] {
+        display: none !important;
+    }
+
+    /* Smooth transitions globally */
+    * {
+        @apply transition-colors duration-200;
+    }
+
+    html {
+        @apply scroll-smooth;
+    }
+
+    body {
+        @apply bg-neutral-50 text-neutral-900;
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+        body {
+            @apply bg-neutral-950 text-neutral-50;
+        }
+
+        .input,
+        .card {
+            @apply bg-neutral-900 border-neutral-800;
+        }
+
+        .input::placeholder {
+            @apply text-neutral-500;
+        }
+    }
+
+    /* Accessibility: Respect prefers-reduced-motion */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            @apply !duration-0 !animate-none;
+        }
+    }
+}
+
+@layer components {
+    /* Smooth form focus states */
+    .input:focus {
+        @apply ring-2 ring-indigo-500/10 border-indigo-500;
+    }
+
+    /* Smooth button hover states */
+    .btn:active {
+        @apply scale-95;
+    }
+
+    /* Selection colors */
+    ::selection {
+        @apply bg-indigo-200 text-indigo-900;
+    }
+
+    /* Link focus visible states */
+    a:focus-visible {
+        @apply outline-2 outline-offset-2 outline-indigo-500;
+    }
+}
