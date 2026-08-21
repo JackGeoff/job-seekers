@@ -1,15 +1,12 @@
-<footer class="border-t border-neutral-200 bg-white">
+<footer class="border-t border-brand-100 bg-white/90">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             <!-- Brand -->
             <div>
-                <a href="{{ route('home') }}" class="flex items-center gap-2 text-lg font-semibold text-primary-600 mb-4">
-                    <span class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                        J
-                    </span>
-                    {{ config('app.name', 'JobSeekers') }}
+                <a href="{{ route('home') }}" class="mb-4 flex items-center">
+                    <img src="{{ asset('images/jobseekers-logo.png') }}" alt="Job Seekers" class="brand-logo">
                 </a>
-                <p class="text-sm text-neutral-600">Finding the right talent for Kenya's growing tech ecosystem.</p>
+                <p class="text-sm text-slate-600">Finding the right talent for Kenya's growing job market.</p>
             </div>
 
             <!-- Product -->

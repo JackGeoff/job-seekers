@@ -1,19 +1,16 @@
-<nav class="border-b border-neutral-200 bg-white sticky top-0 z-50" x-data="{ mobileOpen: false, userMenuOpen: false }">
+<nav class="sticky top-0 z-50 border-b border-brand-100 bg-white/95 shadow-sm shadow-brand-900/5 backdrop-blur" x-data="{ mobileOpen: false, userMenuOpen: false }">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
             <!-- Logo -->
-            <a href="{{ route('home') }}" class="flex items-center gap-2 text-xl font-semibold text-primary-600">
-                <span class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                    J
-                </span>
-                <span class="hidden sm:inline">{{ config('app.name', 'JobSeekers') }}</span>
+            <a href="{{ route('home') }}" class="flex items-center rounded-lg focus-visible:outline-brand-500">
+                <img src="{{ asset('images/jobseekers-logo.png') }}" alt="Job Seekers" class="brand-logo">
             </a>
 
             <!-- Desktop Navigation -->
             <div class="hidden md:flex items-center gap-8">
-                <a href="#" class="text-neutral-600 hover:text-neutral-900 text-sm font-medium transition-colors">Browse Jobs</a>
-                <a href="#" class="text-neutral-600 hover:text-neutral-900 text-sm font-medium transition-colors">Companies</a>
-                <a href="#" class="text-neutral-600 hover:text-neutral-900 text-sm font-medium transition-colors">Resources</a>
+                <a href="#" class="text-slate-600 hover:text-brand-600 text-sm font-medium transition-colors">Browse Jobs</a>
+                <a href="#" class="text-slate-600 hover:text-brand-600 text-sm font-medium transition-colors">Companies</a>
+                <a href="#" class="text-slate-600 hover:text-brand-600 text-sm font-medium transition-colors">Resources</a>
             </div>
 
             <!-- Right side actions -->
@@ -60,8 +57,8 @@
                         </svg>
                     </button>
                 @else
-                    <a href="{{ route('login') }}" class="btn btn-ghost btn-sm">Sign in</a>
-                    <a href="{{ route('register') }}" class="btn btn-primary btn-sm">Get Started</a>
+                    <a href="{{ route('login') }}" class="rounded-xl px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50">Sign in</a>
+                    <a href="{{ route('register') }}" class="brand-btn min-h-10 px-4 py-2 text-sm">Get Started</a>
                 @endauth
             </div>
         </div>

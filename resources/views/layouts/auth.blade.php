@@ -13,9 +13,8 @@
         <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 bg-gradient-to-b from-indigo-100/80 via-slate-50 to-transparent lg:hidden"></div>
 
         <section class="flex min-h-screen flex-col px-5 py-6 sm:px-8 lg:px-12 xl:px-20">
-            <a href="{{ route('home') }}" class="inline-flex w-fit items-center gap-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-4">
-                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-lg font-bold text-white shadow-lg shadow-indigo-600/25">J</span>
-                <span class="text-lg font-semibold tracking-tight text-slate-950">{{ config('app.name', 'Job seekers') }}</span>
+            <a href="{{ route('home') }}" class="inline-flex w-fit items-center rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-4">
+                <img src="{{ asset('images/jobseekers-logo.png') }}" alt="Job Seekers" class="brand-logo brand-logo--auth">
             </a>
 
             <div class="flex flex-1 items-center justify-center py-10 sm:py-14 lg:py-10">
@@ -27,8 +26,8 @@
             <p class="text-center text-xs text-slate-400 lg:text-left">&copy; {{ date('Y') }} {{ config('app.name', 'Job seekers') }}. Find work that moves you forward.</p>
         </section>
 
-        <aside class="relative hidden overflow-hidden bg-slate-950 px-12 py-14 text-white lg:flex xl:px-16">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_82%_16%,rgba(129,140,248,0.38),transparent_25%),radial-gradient(circle_at_12%_90%,rgba(6,182,212,0.18),transparent_34%)]"></div>
+        <aside class="relative hidden overflow-hidden bg-brand-900 px-12 py-14 text-white lg:flex xl:px-16">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_82%_16%,rgba(49,134,232,0.42),transparent_25%),radial-gradient(circle_at_12%_90%,rgba(249,115,22,0.2),transparent_34%)]"></div>
             <div class="absolute -right-28 top-28 h-80 w-80 rounded-full border border-indigo-300/15"></div>
             <div class="absolute -bottom-36 -left-24 h-96 w-96 rounded-full border border-sky-300/10"></div>
 
@@ -38,7 +37,7 @@
                 </span>
 
                 <div class="max-w-md">
-                    <p class="text-sm font-medium text-indigo-200">JOB SEEKERS</p>
+                    <p class="text-sm font-medium text-brand-100">JOB SEEKERS</p>
                     <h2 class="mt-4 text-4xl font-semibold leading-[1.08] tracking-tight xl:text-5xl">Find opportunities.<br>Build your future.</h2>
                     <p class="mt-5 max-w-sm text-base leading-7 text-slate-300">A clearer path from possibility to your next great role.</p>
 

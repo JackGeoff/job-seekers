@@ -18,7 +18,7 @@
 <body class="min-w-0 overflow-x-hidden bg-[#fafaff] font-sans text-slate-950 antialiased" x-data="{ mobileOpen: false, profileOpen: false, profile: 'job' }" @keydown.escape.window="mobileOpen = false; profileOpen = false" :class="{ 'overflow-hidden': profileOpen }">
     <header class="relative z-40 border-b border-indigo-100/70 bg-[#fafaff]/90 backdrop-blur">
         <nav class="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10" aria-label="Main navigation">
-            <a href="{{ route('home') }}" class="group flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"><span class="grid size-9 place-items-center rounded-xl bg-indigo-600 text-lg font-black text-white shadow-lg shadow-indigo-200 transition-transform duration-200 group-hover:-rotate-6">J</span><span class="text-lg font-bold tracking-tight text-slate-950">Job seekers</span></a>
+            <a href="{{ route('home') }}" class="group flex items-center rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600"><img src="{{ asset('images/jobseekers-logo.png') }}" alt="Job Seekers" class="brand-logo"></a>
             <div class="hidden items-center gap-8 lg:flex"><a href="#" class="text-sm font-medium text-slate-600 transition hover:text-indigo-600">Browse Jobs</a><a href="#" class="text-sm font-medium text-slate-600 transition hover:text-indigo-600">Companies</a><a href="#" class="text-sm font-medium text-slate-600 transition hover:text-indigo-600">Resources</a></div>
             <div class="hidden items-center gap-3 sm:flex">
                 @auth
