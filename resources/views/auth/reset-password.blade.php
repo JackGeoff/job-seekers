@@ -20,7 +20,7 @@
             <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4" role="status" aria-live="polite"><p class="text-sm font-medium text-emerald-800">{{ session('status') }}</p></div>
         @endif
 
-        <form method="POST" action="{{ url()->current() }}" class="space-y-5" @submit="isSubmitting = true">
+        <form method="POST" action="{{ route('password.update') }}" class="space-y-5" @submit="isSubmitting = true">
             @csrf
             {{-- Connect this form action to Laravel's password.update route when the reset backend is added. --}}
             @if (isset($token))<input type="hidden" name="token" value="{{ $token }}">@endif
