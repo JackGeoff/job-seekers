@@ -511,7 +511,14 @@ Route::middleware('auth')->group(function () {
         */
 
         Route::get('/employer/dashboard', function () {
-            return view('dashboard.employer');
+            $user = Auth::user();
+            $activeJobCount = $user->employerProfile?->jobs()
+                ->where('status', 'published')
+                ->count() ?? 0;
+
+            return view('dashboard.employer', [
+                'activeJobCount' => $activeJobCount,
+            ]);
         })->name('employer.dashboard');
 
     });

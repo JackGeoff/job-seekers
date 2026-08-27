@@ -380,12 +380,12 @@
                                 @checked(old('status', $job->status) === 'draft')
                             >
 
-                            <div class="rounded-2xl border border-slate-200 p-4 transition hover:border-accent-500 hover:bg-accent-50 peer-checked:border-accent-500 peer-checked:bg-accent-50">
-                                <p class="font-semibold text-slate-900">
+                            <div class="rounded-2xl border border-slate-200 p-4 text-slate-900 transition hover:border-accent-600 hover:bg-accent-500 hover:text-white peer-checked:border-accent-600 peer-checked:bg-accent-500 peer-checked:text-white">
+                                <p class="font-semibold">
                                     Draft
                                 </p>
 
-                                <p class="mt-1 text-sm text-slate-500">
+                                <p class="mt-1 text-sm opacity-80">
                                     Keep private.
                                 </p>
                             </div>
@@ -401,12 +401,12 @@
                                 @checked(old('status', $job->status) === 'published')
                             >
 
-                            <div class="rounded-2xl border border-slate-200 p-4 transition hover:border-accent-500 hover:bg-accent-50 peer-checked:border-accent-500 peer-checked:bg-accent-50">
-                                <p class="font-semibold text-slate-900">
+                            <div class="rounded-2xl border border-slate-200 p-4 text-slate-900 transition hover:border-accent-600 hover:bg-accent-500 hover:text-white peer-checked:border-accent-600 peer-checked:bg-accent-500 peer-checked:text-white">
+                                <p class="font-semibold">
                                     Published
                                 </p>
 
-                                <p class="mt-1 text-sm text-slate-500">
+                                <p class="mt-1 text-sm opacity-80">
                                     Visible to candidates.
                                 </p>
                             </div>
@@ -422,12 +422,12 @@
                                 @checked(old('status', $job->status) === 'closed')
                             >
 
-                            <div class="rounded-2xl border border-slate-200 p-4 transition hover:border-accent-500 hover:bg-accent-50 peer-checked:border-accent-500 peer-checked:bg-accent-50">
-                                <p class="font-semibold text-slate-900">
+                            <div class="rounded-2xl border border-slate-200 p-4 text-slate-900 transition hover:border-accent-600 hover:bg-accent-500 hover:text-white peer-checked:border-accent-600 peer-checked:bg-accent-500 peer-checked:text-white">
+                                <p class="font-semibold">
                                     Closed
                                 </p>
 
-                                <p class="mt-1 text-sm text-slate-500">
+                                <p class="mt-1 text-sm opacity-80">
                                     No longer accepting applications.
                                 </p>
                             </div>
