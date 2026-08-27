@@ -84,7 +84,7 @@
                                 id="full_name"
                                 name="full_name"
                                 type="text"
-                                value="{{ old('full_name', $candidateProfile?->full_name ?? $user->name) }}"
+                                value="{{ old('full_name', $candidateProfile?->full_name ?? auth()->user()->name) }}"
                                 required
                                 maxlength="255"
                                 class="mt-2 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
@@ -107,7 +107,7 @@
                                 id="phone"
                                 name="phone"
                                 type="tel"
-                                value="{{ old('phone', $candidateProfile?->phone ?? $user->phone) }}"
+                                value="{{ old('phone', $candidateProfile?->phone ?? auth()->user()->phone) }}"
                                 required
                                 maxlength="30"
                                 class="mt-2 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
@@ -130,7 +130,7 @@
                                 id="email"
                                 name="email"
                                 type="email"
-                                value="{{ old('email', $user->email) }}"
+                                value="{{ old('email', auth()->user()->email) }}"
                                 required
                                 maxlength="255"
                                 class="mt-2 block w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none"
