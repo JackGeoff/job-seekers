@@ -5,11 +5,83 @@ namespace App\Http\Controllers;
 use App\Models\Application;
 use App\Models\Job;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CandidateApplicationController extends Controller
 {
     /**
-     * Apply for a job.
+     * Show the application form.
+     */
+    public function create(Request $request, Job $job)
+    {
+        $user = $request->user();
+
+        if ($user->account_type !== 'candidate') {
+            abort(403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check Job
+        |--------------------------------------------------------------------------
+        */
+
+        if ($job->status !== 'published') {
+            return redirect()
+                ->route('jobs.show', $job)
+                ->with('error', 'This job is no longer accepting applications.');
+        }
+
+        if (
+            $job->application_deadline &&
+            $job->application_deadline->isPast()
+        ) {
+            return redirect()
+                ->route('jobs.show', $job)
+                ->with('error', 'The application deadline for this job has passed.');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Candidate Profile
+        |--------------------------------------------------------------------------
+        */
+
+        $candidateProfile = $user->candidateProfile;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent Duplicate Applications
+        |--------------------------------------------------------------------------
+        */
+
+        if ($candidateProfile) {
+            $alreadyApplied = Application::where('job_id', $job->id)
+                ->where('candidate_profile_id', $candidateProfile->id)
+                ->exists();
+
+            if ($alreadyApplied) {
+                return redirect()
+                    ->route('jobs.show', $job)
+                    ->with('error', 'You have already applied for this job.');
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Application Form
+        |--------------------------------------------------------------------------
+        */
+
+        return view('jobs.apply', [
+            'job' => $job,
+            'candidateProfile' => $candidateProfile,
+        ]);
+    }
+
+
+    /**
+     * Submit an application.
      */
     public function store(Request $request, Job $job)
     {
@@ -19,38 +91,119 @@ class CandidateApplicationController extends Controller
             abort(403);
         }
 
-        $candidateProfile = $user->candidateProfile;
-
-        if (!$candidateProfile) {
-            return redirect()
-                ->route('candidate.profile')
-                ->with('error', 'Please complete your candidate profile before applying.');
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | Check Job
+        |--------------------------------------------------------------------------
+        */
 
         if ($job->status !== 'published') {
-            return back()->with('error', 'This job is no longer accepting applications.');
+            return redirect()
+                ->route('jobs.show', $job)
+                ->with('error', 'This job is no longer accepting applications.');
         }
 
         if (
             $job->application_deadline &&
             $job->application_deadline->isPast()
         ) {
-            return back()->with('error', 'The application deadline for this job has passed.');
+            return redirect()
+                ->route('jobs.show', $job)
+                ->with('error', 'The application deadline for this job has passed.');
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get / Create Candidate Profile
+        |--------------------------------------------------------------------------
+        */
+
+        $candidateProfile = $user->candidateProfile;
+
+        if (!$candidateProfile) {
+            $candidateProfile = $user->candidateProfile()->create([
+                'full_name' => $user->name,
+                'phone' => $user->phone,
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent Duplicate Applications
+        |--------------------------------------------------------------------------
+        */
 
         $alreadyApplied = Application::where('job_id', $job->id)
             ->where('candidate_profile_id', $candidateProfile->id)
             ->exists();
 
         if ($alreadyApplied) {
-            return back()->with('error', 'You have already applied for this job.');
+            return redirect()
+                ->route('jobs.show', $job)
+                ->with('error', 'You have already applied for this job.');
         }
 
-        if (!$candidateProfile->cv_path) {
-            return redirect()
-                ->route('candidate.profile')
-                ->with('error', 'Please upload your CV before applying for a job.');
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Application
+        |--------------------------------------------------------------------------
+        */
+
+        $validated = $request->validate([
+            'full_name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'phone' => [
+                'required',
+                'string',
+                'max:30',
+            ],
+
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+            ],
+
+            'cv' => [
+                'required',
+                'file',
+                'mimes:pdf,doc,docx',
+                'max:5120',
+            ],
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Store CV
+        |--------------------------------------------------------------------------
+        */
+
+        $cvPath = $request->file('cv')->store(
+            'cvs',
+            'local'
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update Candidate Profile
+        |--------------------------------------------------------------------------
+        */
+
+        $candidateProfile->update([
+            'full_name' => $validated['full_name'],
+            'phone' => $validated['phone'],
+            'cv_path' => $cvPath,
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Application
+        |--------------------------------------------------------------------------
+        */
 
         Application::create([
             'job_id' => $job->id,
@@ -58,9 +211,102 @@ class CandidateApplicationController extends Controller
             'status' => 'submitted',
         ]);
 
-        return back()->with(
-            'success',
-            'Your application has been submitted successfully.'
+        /*
+        |--------------------------------------------------------------------------
+        | Success
+        |--------------------------------------------------------------------------
+        */
+
+        return redirect()
+            ->route('jobs.show', $job)
+            ->with(
+                'success',
+                'Application sent successfully.'
+            );
+    }
+
+
+    /**
+     * Securely download/view a candidate CV.
+     *
+     * Only the employer who owns the job can access it.
+     */
+    public function downloadCv(
+        Request $request,
+        Application $application
+    ) {
+        $user = $request->user();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Employer Only
+        |--------------------------------------------------------------------------
+        */
+
+        if ($user->account_type !== 'employer') {
+            abort(403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Load Relationships
+        |--------------------------------------------------------------------------
+        */
+
+        $application->load([
+            'job',
+            'candidateProfile',
+        ]);
+
+        $employerProfile = $user->employerProfile;
+
+        if (!$employerProfile) {
+            abort(403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Make Sure Employer Owns This Job
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $application->job->employer_profile_id !==
+            $employerProfile->id
+        ) {
+            abort(403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check CV Exists
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$application->candidateProfile->cv_path) {
+            abort(404, 'CV not found.');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check File Exists
+        |--------------------------------------------------------------------------
+        */
+
+        if (!Storage::disk('local')->exists(
+            $application->candidateProfile->cv_path
+        )) {
+            abort(404, 'CV file not found.');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Return CV
+        |--------------------------------------------------------------------------
+        */
+
+        return Storage::disk('local')->response(
+            $application->candidateProfile->cv_path
         );
     }
 }

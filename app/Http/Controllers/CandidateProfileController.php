@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CandidateProfileController extends Controller
 {
@@ -52,13 +53,41 @@ class CandidateProfileController extends Controller
             'education' => 'nullable|string',
             'experience' => 'nullable|string',
             'bio' => 'nullable|string',
+
+            'cv' => [
+                'nullable',
+                'file',
+                'mimes:pdf,doc,docx',
+                'max:5120',
+            ],
         ]);
 
-        $user->candidateProfile()->updateOrCreate(
+        $profile = $user->candidateProfile;
+
+        $profileData = collect($validated)
+            ->except('cv')
+            ->toArray();
+
+        $profile = $user->candidateProfile()->updateOrCreate(
             ['user_id' => $user->id],
-            $validated
+            $profileData
         );
 
-        return redirect()->route('candidate.dashboard');
+        if ($request->hasFile('cv')) {
+
+            if ($profile->cv_path) {
+                Storage::disk('local')->delete($profile->cv_path);
+            }
+
+            $cvPath = $request->file('cv')->store('cvs', 'local');
+
+            $profile->update([
+                'cv_path' => $cvPath,
+            ]);
+        }
+
+        return redirect()
+            ->route('candidate.dashboard')
+            ->with('success', 'Your profile has been updated successfully.');
     }
 }

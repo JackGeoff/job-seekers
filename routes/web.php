@@ -1,7 +1,14 @@
 <?php
 
+use App\Http\Controllers\CandidateApplicationController;
+use App\Http\Controllers\CandidateJobController;
 use App\Http\Controllers\CandidateProfileController;
+use App\Http\Controllers\EmployerApplicationController;
+use App\Http\Controllers\EmployerJobController;
 use App\Http\Controllers\EmployerProfileController;
+use App\Http\Controllers\JobController;
+use App\Models\Application;
+use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -10,11 +17,6 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
-use App\Http\Controllers\EmployerJobController;
-use App\Http\Controllers\CandidateJobController;
-use App\Http\Controllers\CandidateApplicationController;
-use App\Http\Controllers\JobController;
-use App\Http\Controllers\EmployerApplicationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -122,7 +124,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', function (Request $request) {
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
             'email' => [
                 'required',
@@ -149,7 +155,7 @@ Route::middleware('guest')->group(function () {
             ],
         ]);
 
-        $user = \App\Models\User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'],
@@ -220,10 +226,6 @@ Route::middleware('guest')->group(function () {
         |--------------------------------------------------------------------------
         | Always Use A Generic Response
         |--------------------------------------------------------------------------
-        |
-        | This prevents revealing whether an email address exists
-        | in the database.
-        |
         */
 
         if ($status === Password::RESET_LINK_SENT) {
@@ -268,7 +270,12 @@ Route::middleware('guest')->group(function () {
 
         $validated = $request->validate([
             'token' => ['required'],
-            'email' => ['required', 'email'],
+
+            'email' => [
+                'required',
+                'email',
+            ],
+
             'password' => [
                 'required',
                 'confirmed',
@@ -303,7 +310,9 @@ Route::middleware('guest')->group(function () {
             ->withErrors([
                 'email' => __($status),
             ])
-            ->withInput($request->only('email'));
+            ->withInput(
+                $request->only('email')
+            );
 
     })->name('password.update');
 
@@ -312,18 +321,15 @@ Route::middleware('guest')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Email Verification Routes
+| Authenticated Routes
 |--------------------------------------------------------------------------
-|
-| These routes require the user to be logged in.
-|
 */
 
 Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Verification Notice
+    | Email Verification
     |--------------------------------------------------------------------------
     */
 
@@ -332,12 +338,6 @@ Route::middleware('auth')->group(function () {
     })->name('verification.notice');
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Verify Email
-    |--------------------------------------------------------------------------
-    */
-
     Route::get('/email/verify/{id}/{hash}', function (
         EmailVerificationRequest $request
     ) {
@@ -345,12 +345,6 @@ Route::middleware('auth')->group(function () {
         $request->fulfill();
 
         $user = $request->user();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Redirect According To Account Type
-        |--------------------------------------------------------------------------
-        */
 
         if ($user->account_type === 'candidate') {
             return redirect()->route('candidate.profile');
@@ -362,14 +356,10 @@ Route::middleware('auth')->group(function () {
 
         return redirect()->route('dashboard');
 
-    })->middleware('signed')->name('verification.verify');
+    })
+        ->middleware('signed')
+        ->name('verification.verify');
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Resend Verification Email
-    |--------------------------------------------------------------------------
-    */
 
     Route::post('/email/verification-notification', function (
         Request $request
@@ -386,20 +376,24 @@ Route::middleware('auth')->group(function () {
             'A new verification link has been sent to your email address.'
         );
 
-    })->middleware('throttle:6,1')->name('verification.send');
+    })
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
 
 
     /*
     |--------------------------------------------------------------------------
-    | Candidate Profile
+    | Verified User Routes
     |--------------------------------------------------------------------------
-    |
-    | The user must be authenticated and have a verified email.
-    |
     */
 
     Route::middleware('verified')->group(function () {
 
+        /*
+        |--------------------------------------------------------------------------
+        | Candidate Profile
+        |--------------------------------------------------------------------------
+        */
 
         Route::get('/candidate/profile', [
             CandidateProfileController::class,
@@ -411,9 +405,22 @@ Route::middleware('auth')->group(function () {
             'store',
         ])->name('candidate.profile.store');
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Candidate Dashboard / Jobs
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('/candidate/dashboard', [
+            CandidateJobController::class,
+            'index',
+        ])->name('candidate.dashboard');
+
         Route::get('/candidate/jobs', [
-            CandidateJobController::class,'index',
-            ])->name('candidate.jobs.index');
+            CandidateJobController::class,
+            'index',
+        ])->name('candidate.jobs.index');
 
 
         /*
@@ -439,6 +446,17 @@ Route::middleware('auth')->group(function () {
         |--------------------------------------------------------------------------
         */
 
+        /*
+         * Show dedicated application form.
+         */
+        Route::get('/jobs/{job}/apply', [
+            CandidateApplicationController::class,
+            'create',
+        ])->name('candidate.jobs.apply.create');
+
+        /*
+         * Submit application.
+         */
         Route::post('/jobs/{job}/apply', [
             CandidateApplicationController::class,
             'store',
@@ -461,55 +479,71 @@ Route::middleware('auth')->group(function () {
             'store',
         ])->name('employer.profile.store');
 
+
         /*
-|--------------------------------------------------------------------------
-| Employer Jobs
-|--------------------------------------------------------------------------
-*/
+        |--------------------------------------------------------------------------
+        | Employer Jobs
+        |--------------------------------------------------------------------------
+        */
 
-Route::middleware('auth')->group(function () {
+        Route::get('/employer/jobs', [
+            EmployerJobController::class,
+            'index',
+        ])->name('employer.jobs.index');
 
-    Route::get('/employer/jobs', [
-        EmployerJobController::class,
-        'index',
-    ])->name('employer.jobs.index');
+        Route::get('/employer/jobs/create', [
+            EmployerJobController::class,
+            'create',
+        ])->name('employer.jobs.create');
 
-    Route::get('/employer/jobs/create', [
-        EmployerJobController::class,
-        'create',
-    ])->name('employer.jobs.create');
+        Route::post('/employer/jobs', [
+            EmployerJobController::class,
+            'store',
+        ])->name('employer.jobs.store');
 
-    Route::post('/employer/jobs', [
-        EmployerJobController::class,
-        'store',
-    ])->name('employer.jobs.store');
+        Route::get('/employer/jobs/{job}/edit', [
+            EmployerJobController::class,
+            'edit',
+        ])->name('employer.jobs.edit');
 
-    Route::get('/employer/jobs/{job}/edit', [
-        EmployerJobController::class,
-        'edit',
-    ])->name('employer.jobs.edit');
+        Route::put('/employer/jobs/{job}', [
+            EmployerJobController::class,
+            'update',
+        ])->name('employer.jobs.update');
 
-    Route::put('/employer/jobs/{job}', [
-        EmployerJobController::class,
-        'update',
-    ])->name('employer.jobs.update');
+        Route::patch('/employer/jobs/{job}/close', [
+            EmployerJobController::class,
+            'close',
+        ])->name('employer.jobs.close');
 
-    Route::patch('/employer/jobs/{job}/close', [
-        EmployerJobController::class,
-        'close',
-    ])->name('employer.jobs.close');
+        Route::delete('/employer/jobs/{job}', [
+            EmployerJobController::class,
+            'destroy',
+        ])->name('employer.jobs.destroy');
 
-    Route::delete('/employer/jobs/{job}', [
-        EmployerJobController::class,
-        'destroy',
-    ])->name('employer.jobs.destroy');
 
-    });
+        /*
+        |--------------------------------------------------------------------------
+        | Employer Applications
+        |--------------------------------------------------------------------------
+        */
 
         Route::get('/employer/applications', [
             EmployerApplicationController::class,
             'index',
         ])->name('employer.applications.index');
+
+
+        /*
+         * Secure CV download.
+         *
+         * The controller checks that the authenticated employer
+         * owns the job associated with the application.
+         */
+        Route::get('/employer/applications/{application}/cv', [
+            CandidateApplicationController::class,
+            'downloadCv',
+        ])->name('employer.applications.cv');
 
 
         /*
@@ -537,38 +571,40 @@ Route::middleware('auth')->group(function () {
 
         /*
         |--------------------------------------------------------------------------
-        | Candidate Dashboard
-        |--------------------------------------------------------------------------
-        */
-
-        Route::get('/candidate/dashboard', [
-            CandidateJobController::class,
-            'index',
-            ])->name('candidate.dashboard');
-
-
-        /*
-        |--------------------------------------------------------------------------
         | Employer Dashboard
         |--------------------------------------------------------------------------
         */
 
         Route::get('/employer/dashboard', function () {
+
             $user = Auth::user();
+
             $employerProfile = $user->employerProfile;
+
             $jobs = $employerProfile?->jobs()->get() ?? collect();
+
             $jobIds = $jobs->pluck('id');
-            $applicationQuery = \App\Models\Application::whereIn('job_id', $jobIds);
+
+            $applicationQuery = Application::whereIn(
+                'job_id',
+                $jobIds
+            );
 
             return view('dashboard.employer', [
-                'activeJobCount' => $jobs->where('status', 'published')->count(),
+                'activeJobCount' => $jobs
+                    ->where('status', 'published')
+                    ->count(),
+
                 'applicationCount' => $applicationQuery->count(),
-                'candidateCount' => $applicationQuery->distinct('candidate_profile_id')->count('candidate_profile_id'),
+
+                'candidateCount' => $applicationQuery
+                    ->distinct('candidate_profile_id')
+                    ->count('candidate_profile_id'),
             ]);
+
         })->name('employer.dashboard');
 
     });
-
 
     /*
     |--------------------------------------------------------------------------

@@ -62,13 +62,20 @@
                                 </div>
                             </dl>
 
-                            @if ($application->candidateProfile->cv_path)
-                                <a href="{{ \Illuminate\Support\Facades\Storage::url($application->candidateProfile->cv_path) }}" target="_blank" rel="noopener" class="brand-btn accent-btn mt-6 w-full sm:w-auto">
-                                    View CV
-                                </a>
-                            @else
-                                <p class="mt-6 text-sm font-medium text-slate-500">CV not provided</p>
-                            @endif
+                           @if ($application->candidateProfile->cv_path)
+    <a
+        href="{{ route('employer.applications.cv', $application) }}"
+        target="_blank"
+        rel="noopener"
+        class="brand-btn accent-btn mt-6 w-full sm:w-auto"
+    >
+        View CV
+    </a>
+@else
+    <p class="mt-6 text-sm font-medium text-slate-500">
+        CV not provided
+    </p>
+@endif
                         </article>
                     @endforeach
                 </div>
