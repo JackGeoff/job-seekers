@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use App\Http\Controllers\EmployerJobController;
+use App\Http\Controllers\CandidateJobController;
 
 /*
 |--------------------------------------------------------------------------
@@ -407,6 +408,10 @@ Route::middleware('auth')->group(function () {
             'store',
         ])->name('candidate.profile.store');
 
+        Route::get('/candidate/jobs', [
+            CandidateJobController::class,'index',
+            ])->name('candidate.jobs.index');
+
 
         /*
         |--------------------------------------------------------------------------
@@ -499,9 +504,10 @@ Route::middleware('auth')->group(function () {
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/candidate/dashboard', function () {
-            return view('dashboard.candidate');
-        })->name('candidate.dashboard');
+        Route::get('/candidate/dashboard', [
+            CandidateJobController::class,
+            'index',
+            ])->name('candidate.dashboard');
 
 
         /*
