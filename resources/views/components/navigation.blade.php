@@ -265,7 +265,7 @@
                 class="border-t border-neutral-200 md:hidden"
             >
 
-                <div class="space-y-1 px-4 py-4">
+                <div class="space-y-2 px-4 py-4">
 
                     @if (Auth::user()->account_type === 'candidate')
 

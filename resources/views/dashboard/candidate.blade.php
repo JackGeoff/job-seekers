@@ -35,7 +35,7 @@
 
             {{-- Dashboard Navigation --}}
             <nav
-                class="mt-7 flex gap-2 overflow-x-auto pb-1 text-sm font-medium"
+                class="mt-7 flex gap-4 overflow-x-auto pb-1 text-sm font-medium"
                 aria-label="Candidate dashboard navigation"
             >
 

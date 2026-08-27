@@ -13,7 +13,7 @@
                 </div>
             </div>
 
-            <nav class="mt-7 flex gap-2 overflow-x-auto pb-1 text-sm font-medium" aria-label="Employer dashboard navigation">
+            <nav class="mt-7 flex gap-4 overflow-x-auto pb-1 text-sm font-medium" aria-label="Employer dashboard navigation">
                 <a href="{{ route('employer.dashboard') }}" class="shrink-0 rounded-lg px-4 py-2 text-slate-600 hover:bg-white">Dashboard</a>
                 <a href="{{ route('employer.jobs.index') }}" class="shrink-0 rounded-lg px-4 py-2 text-slate-600 hover:bg-white">Jobs</a>
                 <a href="{{ route('employer.applications.index') }}" class="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-white">Applications</a>
