@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
+use App\Http\Controllers\EmployerJobController;
 
 /*
 |--------------------------------------------------------------------------
@@ -395,6 +396,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('verified')->group(function () {
 
+
         Route::get('/candidate/profile', [
             CandidateProfileController::class,
             'create',
@@ -421,6 +423,51 @@ Route::middleware('auth')->group(function () {
             EmployerProfileController::class,
             'store',
         ])->name('employer.profile.store');
+
+        /*
+|--------------------------------------------------------------------------
+| Employer Jobs
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/employer/jobs', [
+        EmployerJobController::class,
+        'index',
+    ])->name('employer.jobs.index');
+
+    Route::get('/employer/jobs/create', [
+        EmployerJobController::class,
+        'create',
+    ])->name('employer.jobs.create');
+
+    Route::post('/employer/jobs', [
+        EmployerJobController::class,
+        'store',
+    ])->name('employer.jobs.store');
+
+    Route::get('/employer/jobs/{job}/edit', [
+        EmployerJobController::class,
+        'edit',
+    ])->name('employer.jobs.edit');
+
+    Route::put('/employer/jobs/{job}', [
+        EmployerJobController::class,
+        'update',
+    ])->name('employer.jobs.update');
+
+    Route::patch('/employer/jobs/{job}/close', [
+        EmployerJobController::class,
+        'close',
+    ])->name('employer.jobs.close');
+
+    Route::delete('/employer/jobs/{job}', [
+        EmployerJobController::class,
+        'destroy',
+    ])->name('employer.jobs.destroy');
+
+    });
 
 
         /*
