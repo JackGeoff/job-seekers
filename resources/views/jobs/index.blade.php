@@ -30,8 +30,8 @@
 
                     <input
                         type="text"
-                        name="keyword"
-                        value="{{ request('keyword') }}"
+                        name="q"
+                        value="{{ request('q') }}"
                         placeholder="Job title, keyword or category"
                         class="h-12 rounded-xl border border-slate-200 px-4 text-slate-900 outline-none focus:border-brand-500"
                     >

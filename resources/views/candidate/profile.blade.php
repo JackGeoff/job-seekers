@@ -17,10 +17,12 @@
                         <p class="text-sm font-semibold text-slate-900">Profile Completion</p>
                         <p class="mt-1 text-sm text-slate-500">Add the essentials to make your profile more discoverable.</p>
                     </div>
-                    <span class="text-lg font-bold text-accent-600">50%</span>
+                    <span class="text-lg font-bold text-accent-600">
+                        {{ $completion }}%
+                    </span>
                 </div>
-                <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-brand-100" role="progressbar" aria-label="Profile completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
-                    <div class="h-full w-1/2 rounded-full bg-gradient-to-r from-brand-600 to-accent-500"></div>
+                <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-brand-100" role="progressbar" aria-label="Profile completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $completion }}">
+                    <div class="h-full rounded-full bg-gradient-to-r from-brand-600 to-accent-500" style="width: {{ $completion }}%;"></div>
                 </div>
             </div>
 

@@ -86,7 +86,7 @@
                     </p>
 
                     <form method="GET"
-                          action="{{ route('candidate.dashboard') }}"
+                          action="{{ route('jobs.index') }}"
                           class="mt-5 grid gap-3 lg:grid-cols-[1.4fr_1fr_auto]">
 
                         <label class="relative">
@@ -100,8 +100,8 @@
 
                             <input
                                 type="text"
-                                name="search"
-                                value="{{ $search }}"
+                                name="q"
+                                value="{{ request('q') }}"
                                 placeholder="Job title, keyword or company"
                                 class="h-14 w-full rounded-xl border-0 bg-white pl-11 pr-4 text-slate-900 outline-none placeholder:text-slate-400"
                             >
@@ -156,7 +156,7 @@
                     </div>
 
                     <p class="text-sm font-medium text-slate-500">
-                        {{ $jobs->total() }} {{ $jobs->total() === 1 ? 'job' : 'jobs' }} found
+                        {{ $jobs->count() }} {{ $jobs->count() === 1 ? 'job' : 'jobs' }} found
                     </p>
 
                 </div>
@@ -253,14 +253,6 @@
                         @endforeach
 
                     </div>
-
-                    @if ($jobs->hasPages())
-
-                        <div class="mt-8">
-                            {{ $jobs->links() }}
-                        </div>
-
-                    @endif
 
                 @else
 

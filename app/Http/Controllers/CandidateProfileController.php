@@ -8,8 +8,30 @@ class CandidateProfileController extends Controller
 {
     public function create()
     {
+        $profile = request()->user()->candidateProfile;
+
+        $fields = [
+            'full_name',
+            'phone',
+            'location',
+            'job_title',
+            'skills',
+            'education',
+            'experience',
+            'bio',
+        ];
+
+        $completedFields = collect($fields)
+            ->filter(fn ($field) => filled($profile?->{$field}))
+            ->count();
+
+        $completion = (int) round(
+            ($completedFields / count($fields)) * 100
+        );
+
         return view('candidate.profile', [
-            'profile' => request()->user()->candidateProfile,
+            'profile' => $profile,
+            'completion' => $completion,
         ]);
     }
 

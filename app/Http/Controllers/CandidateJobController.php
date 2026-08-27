@@ -48,8 +48,8 @@ class CandidateJobController extends Controller
         }
 
         $jobs = $query
-            ->paginate(10)
-            ->withQueryString();
+            ->take(6)
+            ->get();
 
         return view('dashboard.candidate', [
             'jobs' => $jobs,

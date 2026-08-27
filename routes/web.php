@@ -14,6 +14,7 @@ use App\Http\Controllers\EmployerJobController;
 use App\Http\Controllers\CandidateJobController;
 use App\Http\Controllers\CandidateApplicationController;
 use App\Http\Controllers\JobController;
+use App\Http\Controllers\EmployerApplicationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -505,6 +506,11 @@ Route::middleware('auth')->group(function () {
 
     });
 
+        Route::get('/employer/applications', [
+            EmployerApplicationController::class,
+            'index',
+        ])->name('employer.applications.index');
+
 
         /*
         |--------------------------------------------------------------------------
@@ -549,12 +555,15 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/employer/dashboard', function () {
             $user = Auth::user();
-            $activeJobCount = $user->employerProfile?->jobs()
-                ->where('status', 'published')
-                ->count() ?? 0;
+            $employerProfile = $user->employerProfile;
+            $jobs = $employerProfile?->jobs()->get() ?? collect();
+            $jobIds = $jobs->pluck('id');
+            $applicationQuery = \App\Models\Application::whereIn('job_id', $jobIds);
 
             return view('dashboard.employer', [
-                'activeJobCount' => $activeJobCount,
+                'activeJobCount' => $jobs->where('status', 'published')->count(),
+                'applicationCount' => $applicationQuery->count(),
+                'candidateCount' => $applicationQuery->distinct('candidate_profile_id')->count('candidate_profile_id'),
             ]);
         })->name('employer.dashboard');
 

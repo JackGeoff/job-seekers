@@ -12,22 +12,25 @@ class JobController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Job::query()
+        $query = Job::with('employerProfile')
             ->where('status', 'published')
             ->latest();
 
-        if ($request->filled('keyword')) {
-            $keyword = $request->input('keyword');
+        if ($request->filled('q')) {
+            $keyword = trim($request->input('q'));
 
             $query->where(function ($q) use ($keyword) {
                 $q->where('title', 'like', "%{$keyword}%")
                     ->orWhere('category', 'like', "%{$keyword}%")
-                    ->orWhere('description', 'like', "%{$keyword}%");
+                    ->orWhere('description', 'like', "%{$keyword}%")
+                    ->orWhereHas('employerProfile', function ($companyQuery) use ($keyword) {
+                        $companyQuery->where('company_name', 'like', "%{$keyword}%");
+                    });
             });
         }
 
         if ($request->filled('location')) {
-            $location = $request->input('location');
+            $location = trim($request->input('location'));
 
             $query->where(
                 'location',
