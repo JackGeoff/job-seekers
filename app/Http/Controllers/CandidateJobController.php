@@ -2,16 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Job;
 use Illuminate\Http\Request;
+use App\Models\Job;
 
 class CandidateJobController extends Controller
 {
     /**
-     * Display published jobs to candidates.
+     * Display the candidate dashboard and published jobs.
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+
+        if ($user->account_type !== 'candidate') {
+            abort(403);
+        }
+
         $query = Job::with('employerProfile')
             ->where('status', 'published')
             ->latest();
@@ -22,16 +28,27 @@ class CandidateJobController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if ($request->filled('search')) {
-            $search = trim($request->input('search'));
+        $search = trim(
+            $request->input(
+                'search',
+                $request->input('q', '')
+            )
+        );
 
+        if ($search !== '') {
             $query->where(function ($q) use ($search) {
+
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhere('category', 'like', "%{$search}%")
                     ->orWhereHas('employerProfile', function ($companyQuery) use ($search) {
-                        $companyQuery->where('company_name', 'like', "%{$search}%");
+                        $companyQuery->where(
+                            'company_name',
+                            'like',
+                            "%{$search}%"
+                        );
                     });
+
             });
         }
 
@@ -41,20 +58,88 @@ class CandidateJobController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if ($request->filled('location')) {
-            $location = trim($request->input('location'));
+        $location = trim(
+            $request->input('location', '')
+        );
 
-            $query->where('location', 'like', "%{$location}%");
+        if ($location !== '') {
+            $query->where(
+                'location',
+                'like',
+                "%{$location}%"
+            );
         }
 
         $jobs = $query
             ->take(6)
             ->get();
 
+        /*
+        |--------------------------------------------------------------------------
+        | Candidate Applications
+        |--------------------------------------------------------------------------
+        */
+
+        $candidateProfile = $user->candidateProfile;
+
+        $applications = $candidateProfile
+            ? $candidateProfile->applications()
+                ->get()
+            : collect();
+
+        $applicationCount = $applications->count();
+
+        $underReviewCount = $applications
+            ->whereIn('status', [
+                'under_review',
+                'reviewing',
+            ])
+            ->count();
+
+        $shortlistedCount = $applications
+            ->where('status', 'shortlisted')
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Profile Completion
+        |--------------------------------------------------------------------------
+        */
+
+        $profileCompletion = 0;
+
+        if ($candidateProfile) {
+
+            $profileFields = [
+                'full_name',
+                'phone',
+                'location',
+                'job_title',
+                'skills',
+                'education',
+                'experience',
+                'cv_path',
+            ];
+
+            $completedFields = collect($profileFields)
+                ->filter(function ($field) use ($candidateProfile) {
+                    return filled($candidateProfile->{$field});
+                })
+                ->count();
+
+            $profileCompletion = (int) round(
+                ($completedFields / count($profileFields)) * 100
+            );
+        }
+
         return view('dashboard.candidate', [
             'jobs' => $jobs,
-            'search' => $request->input('search', ''),
-            'location' => $request->input('location', ''),
+            'search' => $search,
+            'location' => $location,
+            'applicationCount' => $applicationCount,
+            'underReviewCount' => $underReviewCount,
+            'shortlistedCount' => $shortlistedCount,
+            'profileCompletion' => $profileCompletion,
         ]);
     }
 }

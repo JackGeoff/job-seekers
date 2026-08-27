@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CandidateApplicationController;
+use App\Http\Controllers\CandidateApplicationsController;
 use App\Http\Controllers\CandidateJobController;
 use App\Http\Controllers\CandidateProfileController;
 use App\Http\Controllers\EmployerApplicationController;
@@ -421,6 +422,17 @@ Route::middleware('auth')->group(function () {
             CandidateJobController::class,
             'index',
         ])->name('candidate.jobs.index');
+
+        /*
+|--------------------------------------------------------------------------
+| Candidate Application Tracking
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/candidate/applications', [
+    CandidateApplicationsController::class,
+    'index',
+])->name('candidate.applications.index');
 
 
         /*

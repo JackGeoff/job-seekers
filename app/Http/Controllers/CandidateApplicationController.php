@@ -226,6 +226,7 @@ class CandidateApplicationController extends Controller
     }
 
 
+
     /**
      * Securely download/view a candidate CV.
      *

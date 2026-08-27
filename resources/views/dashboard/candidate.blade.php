@@ -2,12 +2,14 @@
 
 @section('content')
     <section class="relative overflow-hidden py-8 sm:py-12">
+
         <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-96 bg-gradient-to-br from-brand-100/80 via-white to-accent-50/50"></div>
 
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
             {{-- Header --}}
             <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+
                 <div>
                     <p class="text-sm font-semibold uppercase tracking-[0.16em] text-brand-600">
                         Candidate dashboard
@@ -22,50 +24,49 @@
                     </p>
                 </div>
 
-                <a href="{{ route('candidate.profile') }}"
-                   class="inline-flex min-h-11 items-center justify-center rounded-xl border border-accent-200 bg-white px-4 text-sm font-semibold text-accent-600 shadow-sm transition hover:border-accent-400 hover:bg-accent-50">
+                <a
+                    href="{{ route('candidate.profile') }}"
+                    class="inline-flex min-h-11 items-center justify-center rounded-xl border border-accent-200 bg-white px-4 text-sm font-semibold text-accent-600 shadow-sm transition hover:border-accent-400 hover:bg-accent-50"
+                >
                     My Profile
                 </a>
+
             </div>
 
-            {{-- Navigation --}}
-            <nav class="mt-7 flex gap-2 overflow-x-auto pb-1 text-sm font-medium"
-                 aria-label="Candidate dashboard navigation">
+            {{-- Dashboard Navigation --}}
+            <nav
+                class="mt-7 flex gap-2 overflow-x-auto pb-1 text-sm font-medium"
+                aria-label="Candidate dashboard navigation"
+            >
 
-                <a href="{{ route('candidate.dashboard') }}"
-                   class="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-white">
+                <a
+                    href="{{ route('candidate.dashboard') }}"
+                    class="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-white"
+                >
                     Dashboard
                 </a>
 
-                <a href="{{ route('jobs.index') }}"
-                   class="shrink-0 rounded-lg px-4 py-2 text-slate-600 hover:bg-white">
+                <a
+                    href="{{ route('jobs.index') }}"
+                    class="shrink-0 rounded-lg px-4 py-2 text-slate-600 hover:bg-white"
+                >
                     Find Jobs
                 </a>
 
-                <span class="shrink-0 rounded-lg px-4 py-2 text-slate-500">
-                    Saved Jobs
-                </span>
+                <a
+                    href="{{ route('candidate.applications.index') }}"
+                    class="shrink-0 rounded-lg px-4 py-2 text-slate-600 hover:bg-white"
+                >
+                    My Applications
+                </a>
 
-                <span class="shrink-0 rounded-lg px-4 py-2 text-slate-500">
-                    Applications
-                </span>
-
-                <a href="{{ route('candidate.profile') }}"
-                   class="shrink-0 rounded-lg px-4 py-2 text-slate-600 hover:bg-white">
+                <a
+                    href="{{ route('candidate.profile') }}"
+                    class="shrink-0 rounded-lg px-4 py-2 text-slate-600 hover:bg-white"
+                >
                     My Profile
                 </a>
 
-                <form method="POST"
-                      action="{{ route('logout') }}"
-                      class="ml-auto shrink-0">
-
-                    @csrf
-
-                    <button type="submit"
-                            class="rounded-lg px-4 py-2 text-slate-600 hover:bg-white">
-                        Logout
-                    </button>
-                </form>
             </nav>
 
             {{-- Search --}}
@@ -85,58 +86,101 @@
                         Explore opportunities by title, skill, company, or location.
                     </p>
 
-                    <form method="GET"
-                          action="{{ route('jobs.index') }}"
-                          class="mt-5 grid gap-3 lg:grid-cols-[1.4fr_1fr_auto]">
+                    <form
+                        method="GET"
+                        action="{{ route('jobs.index') }}"
+                        class="mt-5 grid gap-3 lg:grid-cols-[1.4fr_1fr_auto]"
+                    >
 
-                        <label class="relative">
-                            <span class="sr-only">
-                                Job title, keyword or company
-                            </span>
+                        <input
+                            type="text"
+                            name="q"
+                            value="{{ $search }}"
+                            placeholder="Job title, keyword or company"
+                            class="h-14 w-full rounded-xl border-0 bg-white px-4 text-slate-900 outline-none placeholder:text-slate-400"
+                        >
 
-                            <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">
-                                ⌕
-                            </span>
-
-                            <input
-                                type="text"
-                                name="q"
-                                value="{{ request('q') }}"
-                                placeholder="Job title, keyword or company"
-                                class="h-14 w-full rounded-xl border-0 bg-white pl-11 pr-4 text-slate-900 outline-none placeholder:text-slate-400"
-                            >
-                        </label>
-
-                        <label class="relative">
-                            <span class="sr-only">
-                                Location
-                            </span>
-
-                            <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">
-                                ⌖
-                            </span>
-
-                            <input
-                                type="text"
-                                name="location"
-                                value="{{ $location }}"
-                                placeholder="Location"
-                                class="h-14 w-full rounded-xl border-0 bg-white pl-11 pr-4 text-slate-900 outline-none placeholder:text-slate-400"
-                            >
-                        </label>
+                        <input
+                            type="text"
+                            name="location"
+                            value="{{ $location }}"
+                            placeholder="Location"
+                            class="h-14 w-full rounded-xl border-0 bg-white px-4 text-slate-900 outline-none placeholder:text-slate-400"
+                        >
 
                         <button
                             type="submit"
-                            class="h-14 rounded-xl bg-accent-500 px-7 font-semibold text-white shadow-lg transition hover:bg-accent-600">
+                            class="h-14 rounded-xl bg-accent-500 px-7 font-semibold text-white shadow-lg transition hover:bg-accent-600"
+                        >
                             Search Jobs
                         </button>
 
                     </form>
 
                 </div>
+
             </div>
 
-            {{-- Available Jobs --}}
+            {{-- Stats --}}
+            <div class="mt-10 grid gap-4 sm:grid-cols-3">
+
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                    <p class="text-sm font-medium text-slate-600">
+                        Applications
+                    </p>
+
+                    <p class="mt-3 text-3xl font-semibold text-slate-950">
+                        {{ $applicationCount }}
+                    </p>
+
+                    <a
+                        href="{{ route('candidate.applications.index') }}"
+                        class="mt-3 inline-block text-sm font-semibold text-brand-600 hover:text-brand-700"
+                    >
+                        View applications →
+                    </a>
+
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                    <p class="text-sm font-medium text-slate-600">
+                        Under Review
+                    </p>
+
+                    <p class="mt-3 text-3xl font-semibold text-slate-950">
+                        {{ $underReviewCount }}
+                    </p>
+
+                    <p class="mt-3 text-sm text-slate-500">
+                        Applications being reviewed by employers.
+                    </p>
+
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                    <p class="text-sm font-medium text-slate-600">
+                        Profile Completion
+                    </p>
+
+                    <p class="mt-3 text-3xl font-semibold text-slate-950">
+                        {{ $profileCompletion }}%
+                    </p>
+
+                    <a
+                        href="{{ route('candidate.profile') }}"
+                        class="mt-3 inline-block text-sm font-semibold text-brand-600 hover:text-brand-700"
+                    >
+                        Update profile →
+                    </a>
+
+                </div>
+
+            </div>
+
+            {{-- Opportunities --}}
             <div id="available-jobs" class="mt-12">
 
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -147,7 +191,7 @@
                         </p>
 
                         <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                            Here are the jobs we found
+                            Latest jobs
                         </h2>
 
                         <p class="mt-1 text-sm text-slate-500">
@@ -155,9 +199,12 @@
                         </p>
                     </div>
 
-                    <p class="text-sm font-medium text-slate-500">
-                        {{ $jobs->count() }} {{ $jobs->count() === 1 ? 'job' : 'jobs' }} found
-                    </p>
+                    <a
+                        href="{{ route('jobs.index') }}"
+                        class="text-sm font-semibold text-brand-600 hover:text-brand-700"
+                    >
+                        View all jobs →
+                    </a>
 
                 </div>
 
@@ -195,17 +242,13 @@
 
                                         <div class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
 
-                                            <span>
-                                                {{ $job->location }}
-                                            </span>
+                                            <span>{{ $job->location }}</span>
 
                                             <span>
                                                 {{ ucwords(str_replace('-', ' ', $job->employment_type)) }}
                                             </span>
 
-                                            <span>
-                                                {{ $job->category }}
-                                            </span>
+                                            <span>{{ $job->category }}</span>
 
                                         </div>
 
@@ -239,10 +282,12 @@
 
                                     <div class="shrink-0">
 
-                                        {{-- Temporary until Job Details is built --}}
-                                        <span class="inline-flex rounded-xl bg-slate-100 px-5 py-3 text-sm font-semibold text-slate-500">
-                                            View Job — Coming Next
-                                        </span>
+                                        <a
+                                            href="{{ route('jobs.show', $job) }}"
+                                            class="brand-btn accent-btn inline-flex"
+                                        >
+                                            View Job
+                                        </a>
 
                                     </div>
 
@@ -258,11 +303,7 @@
 
                     <div class="mt-6 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-12">
 
-                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-xl text-brand-700">
-                            ⌕
-                        </div>
-
-                        <h3 class="mt-4 text-lg font-semibold text-slate-950">
+                        <h3 class="text-lg font-semibold text-slate-950">
                             No jobs found
                         </h3>
 
@@ -272,8 +313,10 @@
 
                         @if ($search || $location)
 
-                            <a href="{{ route('candidate.dashboard') }}"
-                               class="mt-5 inline-flex rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                            <a
+                                href="{{ route('candidate.dashboard') }}"
+                                class="mt-5 inline-flex rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            >
                                 Clear Search
                             </a>
 
@@ -285,110 +328,7 @@
 
             </div>
 
-            {{-- Dashboard Stats --}}
-            <div class="mt-12 grid gap-4 sm:grid-cols-3">
-
-                @foreach ([
-                    ['Active Applications', '0', 'bg-brand-100 text-brand-700'],
-                    ['Saved Jobs', '0', 'bg-sky-100 text-sky-700'],
-                    ['Profile', '70%', 'bg-orange-100 text-orange-700']
-                ] as [$label, $value, $color])
-
-                    <div class="surface-card rounded-2xl p-5">
-
-                        <div class="flex items-start justify-between">
-
-                            <p class="text-sm font-medium text-slate-600">
-                                {{ $label }}
-                            </p>
-
-                            <span class="flex h-10 w-10 items-center justify-center rounded-xl {{ $color }}">
-                                {{ $label === 'Profile' ? '✓' : '○' }}
-                            </span>
-
-                        </div>
-
-                        <p class="mt-4 text-3xl font-semibold text-slate-950">
-                            {{ $value }}
-                        </p>
-
-                    </div>
-
-                @endforeach
-
-            </div>
-
-            {{-- Recent Activity --}}
-            <div class="mt-12 grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
-
-                <div>
-
-                    <p class="text-sm font-semibold uppercase tracking-[0.16em] text-brand-600">
-                        Your account
-                    </p>
-
-                    <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                        Recent Activity
-                    </h2>
-
-                    <div class="mt-5 rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-
-                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-xl text-brand-700">
-                            ⌁
-                        </div>
-
-                        <p class="mt-4 font-semibold text-slate-900">
-                            No recent activity yet.
-                        </p>
-
-                        <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                            Your applications, saved jobs and profile activity will appear here.
-                        </p>
-
-                    </div>
-
-                </div>
-
-                <aside>
-
-                    <p class="text-sm font-semibold uppercase tracking-[0.16em] text-accent-600">
-                        Shortcuts
-                    </p>
-
-                    <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                        Quick Links
-                    </h2>
-
-                    <div class="mt-5 space-y-3">
-
-                        <a href="{{ route('candidate.profile') }}"
-                           class="block rounded-2xl border border-brand-100 bg-white p-4 font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300">
-                            Complete Profile
-                            <span class="float-right text-brand-600">→</span>
-                        </a>
-
-                        <a href="{{ route('jobs.index') }}"
-                           class="block rounded-2xl border border-accent-100 bg-accent-50 p-4 font-semibold text-accent-700 transition hover:-translate-y-0.5 hover:border-accent-300">
-                            Browse Jobs
-                            <span class="float-right">→</span>
-                        </a>
-
-                        <span class="block rounded-2xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-500">
-                            Saved Jobs
-                            <span class="float-right">Soon</span>
-                        </span>
-
-                        <span class="block rounded-2xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-500">
-                            My Applications
-                            <span class="float-right">Soon</span>
-                        </span>
-
-                    </div>
-
-                </aside>
-
-            </div>
-
         </div>
+
     </section>
 @endsection
