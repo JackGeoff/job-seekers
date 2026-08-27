@@ -136,39 +136,6 @@
                 </div>
             </div>
 
-            {{-- Dashboard Stats --}}
-            <div class="mt-8 grid gap-4 sm:grid-cols-3">
-
-                @foreach ([
-                    ['Active Applications', '0', 'bg-brand-100 text-brand-700'],
-                    ['Saved Jobs', '0', 'bg-sky-100 text-sky-700'],
-                    ['Profile', '70%', 'bg-orange-100 text-orange-700']
-                ] as [$label, $value, $color])
-
-                    <div class="surface-card rounded-2xl p-5">
-
-                        <div class="flex items-start justify-between">
-
-                            <p class="text-sm font-medium text-slate-600">
-                                {{ $label }}
-                            </p>
-
-                            <span class="flex h-10 w-10 items-center justify-center rounded-xl {{ $color }}">
-                                {{ $label === 'Profile' ? '✓' : '○' }}
-                            </span>
-
-                        </div>
-
-                        <p class="mt-4 text-3xl font-semibold text-slate-950">
-                            {{ $value }}
-                        </p>
-
-                    </div>
-
-                @endforeach
-
-            </div>
-
             {{-- Available Jobs --}}
             <div id="available-jobs" class="mt-12">
 
@@ -180,7 +147,7 @@
                         </p>
 
                         <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                            Available Jobs
+                            Here are the jobs we found
                         </h2>
 
                         <p class="mt-1 text-sm text-slate-500">
@@ -323,6 +290,39 @@
                     </div>
 
                 @endif
+
+            </div>
+
+            {{-- Dashboard Stats --}}
+            <div class="mt-12 grid gap-4 sm:grid-cols-3">
+
+                @foreach ([
+                    ['Active Applications', '0', 'bg-brand-100 text-brand-700'],
+                    ['Saved Jobs', '0', 'bg-sky-100 text-sky-700'],
+                    ['Profile', '70%', 'bg-orange-100 text-orange-700']
+                ] as [$label, $value, $color])
+
+                    <div class="surface-card rounded-2xl p-5">
+
+                        <div class="flex items-start justify-between">
+
+                            <p class="text-sm font-medium text-slate-600">
+                                {{ $label }}
+                            </p>
+
+                            <span class="flex h-10 w-10 items-center justify-center rounded-xl {{ $color }}">
+                                {{ $label === 'Profile' ? '✓' : '○' }}
+                            </span>
+
+                        </div>
+
+                        <p class="mt-4 text-3xl font-semibold text-slate-950">
+                            {{ $value }}
+                        </p>
+
+                    </div>
+
+                @endforeach
 
             </div>
 
