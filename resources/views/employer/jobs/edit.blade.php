@@ -380,7 +380,7 @@
                                 @checked(old('status', $job->status) === 'draft')
                             >
 
-                            <div class="rounded-2xl border border-slate-200 p-4 transition peer-checked:border-brand-500 peer-checked:bg-brand-50">
+                            <div class="rounded-2xl border border-slate-200 p-4 transition hover:border-accent-500 hover:bg-accent-50 peer-checked:border-accent-500 peer-checked:bg-accent-50">
                                 <p class="font-semibold text-slate-900">
                                     Draft
                                 </p>
@@ -401,7 +401,7 @@
                                 @checked(old('status', $job->status) === 'published')
                             >
 
-                            <div class="rounded-2xl border border-slate-200 p-4 transition peer-checked:border-accent-500 peer-checked:bg-accent-50">
+                            <div class="rounded-2xl border border-slate-200 p-4 transition hover:border-accent-500 hover:bg-accent-50 peer-checked:border-accent-500 peer-checked:bg-accent-50">
                                 <p class="font-semibold text-slate-900">
                                     Published
                                 </p>
@@ -422,7 +422,7 @@
                                 @checked(old('status', $job->status) === 'closed')
                             >
 
-                            <div class="rounded-2xl border border-slate-200 p-4 transition peer-checked:border-slate-500 peer-checked:bg-slate-100">
+                            <div class="rounded-2xl border border-slate-200 p-4 transition hover:border-accent-500 hover:bg-accent-50 peer-checked:border-accent-500 peer-checked:bg-accent-50">
                                 <p class="font-semibold text-slate-900">
                                     Closed
                                 </p>

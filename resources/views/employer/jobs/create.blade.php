@@ -398,7 +398,7 @@
                                 @checked(old('status') === 'draft')
                             >
 
-                            <div class="rounded-2xl border border-slate-200 p-4 transition peer-checked:border-brand-500 peer-checked:bg-brand-50">
+                            <div class="rounded-2xl border border-slate-200 p-4 transition hover:border-accent-500 hover:bg-accent-50 peer-checked:border-accent-500 peer-checked:bg-accent-50">
                                 <p class="font-semibold text-slate-900">
                                     Save as Draft
                                 </p>
@@ -418,7 +418,7 @@
                                 @checked(old('status', 'published') === 'published')
                             >
 
-                            <div class="rounded-2xl border border-slate-200 p-4 transition peer-checked:border-accent-500 peer-checked:bg-accent-50">
+                            <div class="rounded-2xl border border-slate-200 p-4 transition hover:border-accent-500 hover:bg-accent-50 peer-checked:border-accent-500 peer-checked:bg-accent-50">
                                 <p class="font-semibold text-slate-900">
                                     Publish Job
                                 </p>
