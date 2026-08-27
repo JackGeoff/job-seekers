@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use App\Http\Controllers\EmployerJobController;
 use App\Http\Controllers\CandidateJobController;
+use App\Http\Controllers\CandidateApplicationController;
+use App\Http\Controllers\JobController;
 
 /*
 |--------------------------------------------------------------------------
@@ -411,6 +413,35 @@ Route::middleware('auth')->group(function () {
         Route::get('/candidate/jobs', [
             CandidateJobController::class,'index',
             ])->name('candidate.jobs.index');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Job Marketplace
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('/jobs', [
+            JobController::class,
+            'index',
+        ])->name('jobs.index');
+
+        Route::get('/jobs/{job}', [
+            JobController::class,
+            'show',
+        ])->name('jobs.show');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Candidate Applications
+        |--------------------------------------------------------------------------
+        */
+
+        Route::post('/jobs/{job}/apply', [
+            CandidateApplicationController::class,
+            'store',
+        ])->name('candidate.jobs.apply');
 
 
         /*

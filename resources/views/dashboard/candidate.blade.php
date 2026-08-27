@@ -37,7 +37,7 @@
                     Dashboard
                 </a>
 
-                <a href="#available-jobs"
+                <a href="{{ route('jobs.index') }}"
                    class="shrink-0 rounded-lg px-4 py-2 text-slate-600 hover:bg-white">
                     Find Jobs
                 </a>
@@ -375,7 +375,7 @@
                             <span class="float-right text-brand-600">→</span>
                         </a>
 
-                        <a href="#available-jobs"
+                        <a href="{{ route('jobs.index') }}"
                            class="block rounded-2xl border border-accent-100 bg-accent-50 p-4 font-semibold text-accent-700 transition hover:-translate-y-0.5 hover:border-accent-300">
                             Browse Jobs
                             <span class="float-right">→</span>
