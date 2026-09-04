@@ -8,6 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CandidateProfile extends Model
 {
+    public const REQUIRED_COMPLETION_FIELDS = [
+        'full_name',
+        'phone',
+        'location',
+        'job_title',
+        'cv_path',
+    ];
+
     protected $fillable = [
         'user_id',
         'full_name',
@@ -29,5 +37,16 @@ class CandidateProfile extends Model
     public function applications(): HasMany
     {
         return $this->hasMany(Application::class);
+    }
+
+    public function completionPercentage(): int
+    {
+        $completedFields = collect(self::REQUIRED_COMPLETION_FIELDS)
+            ->filter(fn ($field) => filled($this->{$field}))
+            ->count();
+
+        return (int) round(
+            ($completedFields / count(self::REQUIRED_COMPLETION_FIELDS)) * 100
+        );
     }
 }

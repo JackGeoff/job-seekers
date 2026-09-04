@@ -176,6 +176,19 @@
                         Update profile →
                     </a>
 
+                    <div class="mt-5 border-t border-slate-100 pt-4">
+                        <p class="text-sm font-semibold text-slate-900">{{ $profileCompletion === 100 ? 'Your profile is complete' : 'Complete your profile' }}</p>
+                        <p class="mt-1 text-sm leading-6 text-slate-500">{{ $profileCompletion === 100 ? 'Your basic information and CV are ready for applications.' : 'Add your basic information and upload your CV to start applying for jobs.' }}</p>
+                        <div class="mt-3 space-y-2 text-sm">
+                            @foreach (['full_name' => 'Full Name', 'phone' => 'Phone', 'location' => 'Location', 'job_title' => 'Job Title', 'cv_path' => 'CV'] as $field => $label)
+                                <div class="flex items-center gap-2 {{ filled($candidateProfile?->{$field}) ? 'text-green-700' : 'text-slate-500' }}">
+                                    <span aria-hidden="true">{{ filled($candidateProfile?->{$field}) ? '✓' : '○' }}</span>
+                                    <span>{{ $label }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
                 </div>
 
             </div>

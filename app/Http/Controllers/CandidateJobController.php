@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\CandidateProfile;
 use App\Models\Job;
 
 class CandidateJobController extends Controller
@@ -109,27 +110,7 @@ class CandidateJobController extends Controller
         $profileCompletion = 0;
 
         if ($candidateProfile) {
-
-            $profileFields = [
-                'full_name',
-                'phone',
-                'location',
-                'job_title',
-                'skills',
-                'education',
-                'experience',
-                'cv_path',
-            ];
-
-            $completedFields = collect($profileFields)
-                ->filter(function ($field) use ($candidateProfile) {
-                    return filled($candidateProfile->{$field});
-                })
-                ->count();
-
-            $profileCompletion = (int) round(
-                ($completedFields / count($profileFields)) * 100
-            );
+            $profileCompletion = $candidateProfile->completionPercentage();
         }
 
         return view('dashboard.candidate', [
@@ -139,6 +120,7 @@ class CandidateJobController extends Controller
             'applicationCount' => $applicationCount,
             'underReviewCount' => $underReviewCount,
             'shortlistedCount' => $shortlistedCount,
+            'candidateProfile' => $candidateProfile,
             'profileCompletion' => $profileCompletion,
         ]);
     }

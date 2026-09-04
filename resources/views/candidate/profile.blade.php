@@ -8,7 +8,7 @@
             <div class="mb-8 max-w-2xl">
                 <p class="text-sm font-semibold uppercase tracking-[0.16em] text-brand-600">Candidate profile</p>
                 <h1 class="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">Complete Your Profile</h1>
-                <p class="mt-3 text-base leading-7 text-slate-600">Build your profile so employers can understand your experience and find you for the right opportunities.</p>
+                <p class="mt-3 text-base leading-7 text-slate-600">Add your basic information and upload your CV to start applying for jobs.</p>
             </div>
 
             <div class="surface-card rounded-2xl p-5 sm:p-7">
@@ -24,6 +24,14 @@
                 <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-brand-100" role="progressbar" aria-label="Profile completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $completion }}">
                     <div class="h-full rounded-full bg-gradient-to-r from-brand-600 to-accent-500" style="width: {{ $completion }}%;"></div>
                 </div>
+                <div class="mt-5 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-5">
+                    @foreach ($requiredFields as $field)
+                        <div class="flex items-center gap-2 text-slate-600">
+                            <span class="flex h-5 w-5 items-center justify-center rounded-full {{ filled($profile?->{$field}) ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400' }}" aria-hidden="true">{{ filled($profile?->{$field}) ? '✓' : '·' }}</span>
+                            <span>{{ $field === 'cv_path' ? 'CV' : ucwords(str_replace('_', ' ', $field)) }}</span>
+                        </div>
+                    @endforeach
+                </div>
             </div>
 
             @if ($errors->any())
@@ -37,7 +45,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('candidate.profile.store') }}" class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-brand-900/5 sm:p-8">
+            <form method="POST" action="{{ route('candidate.profile.store') }}" enctype="multipart/form-data" class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-brand-900/5 sm:p-8">
                 @csrf
 
                 <div class="grid gap-5 sm:grid-cols-2">
@@ -61,6 +69,18 @@
                         <input id="job_title" name="job_title" type="text" value="{{ old('job_title', $profile?->job_title) }}" required placeholder="e.g. Software Developer" class="auth-input h-12 w-full rounded-xl border bg-white px-4 text-slate-950 outline-none transition @error('job_title') border-red-500 @else border-slate-200 @enderror">
                         @error('job_title') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
+                </div>
+
+                <div class="mt-5 rounded-xl border border-brand-100 bg-brand-50/50 p-4">
+                    <label for="cv" class="mb-2 block text-sm font-semibold text-slate-800">CV <span class="text-red-600">*</span></label>
+                    <input id="cv" name="cv" type="file" accept=".pdf,.doc,.docx" class="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-brand-700 @error('cv') border-red-500 @enderror">
+                    <p class="mt-2 text-xs text-slate-500">PDF, DOC, or DOCX up to 5 MB. {{ $profile?->cv_path ? 'A CV is already uploaded; choose a new file to replace it.' : 'Upload your CV to complete your profile.' }}</p>
+                    @error('cv') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="mt-8 border-t border-slate-100 pt-6">
+                    <p class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Optional profile information</p>
+                    <p class="mt-1 text-sm text-slate-500">Education, skills, experience and bio can be added now or later.</p>
                 </div>
 
                 <div class="mt-5 grid gap-5 sm:grid-cols-2">

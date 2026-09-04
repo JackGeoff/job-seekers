@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CandidateProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -11,28 +12,13 @@ class CandidateProfileController extends Controller
     {
         $profile = request()->user()->candidateProfile;
 
-        $fields = [
-            'full_name',
-            'phone',
-            'location',
-            'job_title',
-            'skills',
-            'education',
-            'experience',
-            'bio',
-        ];
-
-        $completedFields = collect($fields)
-            ->filter(fn ($field) => filled($profile?->{$field}))
-            ->count();
-
-        $completion = (int) round(
-            ($completedFields / count($fields)) * 100
-        );
+        $fields = CandidateProfile::REQUIRED_COMPLETION_FIELDS;
+        $completion = $profile?->completionPercentage() ?? 0;
 
         return view('candidate.profile', [
             'profile' => $profile,
             'completion' => $completion,
+            'requiredFields' => $fields,
         ]);
     }
 
@@ -74,16 +60,16 @@ class CandidateProfileController extends Controller
         );
 
         if ($request->hasFile('cv')) {
-
-            if ($profile->cv_path) {
-                Storage::disk('local')->delete($profile->cv_path);
-            }
-
+            $previousCvPath = $profile->cv_path;
             $cvPath = $request->file('cv')->store('cvs', 'local');
 
             $profile->update([
                 'cv_path' => $cvPath,
             ]);
+
+            if ($previousCvPath) {
+                Storage::disk('local')->delete($previousCvPath);
+            }
         }
 
         return redirect()
