@@ -78,5 +78,40 @@
         @endif
     </div>
 </section>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.querySelector('form[aria-label="Search jobs"]');
+
+        if (!form) {
+            return;
+        }
+
+        const inputs = form.querySelectorAll('input');
+        const keywordInput = inputs[0];
+        const locationInput = inputs[1];
+
+        keywordInput.placeholder = 'Search jobs, titles or keywords...';
+        keywordInput.name = 'search';
+        locationInput.name = 'location';
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const params = new URLSearchParams();
+            const keyword = keywordInput.value.trim();
+            const location = locationInput.value.trim();
+
+            if (keyword) {
+                params.set('search', keyword);
+            }
+
+            if (location) {
+                params.set('location', location);
+            }
+
+            window.location.href = `{{ route('jobs.index') }}${params.toString() ? `?${params}` : ''}`;
+        });
+    });
+</script>
 </body>
 </html>

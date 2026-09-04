@@ -31,15 +31,15 @@
                     <input
                         type="text"
                         name="q"
-                        value="{{ request('q') }}"
-                        placeholder="Job title, keyword or category"
+                        value="{{ $search }}"
+                        placeholder="Search jobs, titles or keywords..."
                         class="h-12 rounded-xl border border-slate-200 px-4 text-slate-900 outline-none focus:border-brand-500"
                     >
 
                     <input
                         type="text"
                         name="location"
-                        value="{{ request('location') }}"
+                        value="{{ $location }}"
                         placeholder="Location"
                         class="h-12 rounded-xl border border-slate-200 px-4 text-slate-900 outline-none focus:border-brand-500"
                     >
@@ -120,11 +120,22 @@
 
                                     </div>
 
-                                    <a
-                                        href="{{ route('jobs.show', $job) }}"
-                                        class="shrink-0 rounded-xl bg-brand-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-brand-700">
-                                        View Job
-                                    </a>
+                                    <div class="flex shrink-0 flex-col gap-2 sm:min-w-32">
+                                        <a
+                                            href="{{ route('jobs.show', $job) }}"
+                                            class="rounded-xl border border-brand-200 px-5 py-3 text-center text-sm font-semibold text-brand-700 transition hover:bg-brand-50">
+                                            View Job
+                                        </a>
+                                        @auth
+                                            @if (auth()->user()->account_type === 'candidate')
+                                                <a href="{{ route('candidate.jobs.apply.create', $job) }}" class="brand-btn accent-btn text-center">Apply</a>
+                                            @else
+                                                <span class="text-center text-xs text-slate-500">Candidates only</span>
+                                            @endif
+                                        @else
+                                            <a href="{{ route('candidate.jobs.apply.create', $job) }}" class="brand-btn accent-btn text-center">Apply</a>
+                                        @endauth
+                                    </div>
 
                                 </div>
 

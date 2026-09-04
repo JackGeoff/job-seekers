@@ -16,21 +16,27 @@ class JobController extends Controller
             ->publiclyVisible()
             ->latest();
 
-        if ($request->filled('q')) {
-            $keyword = trim($request->input('q'));
+        $keyword = trim((string) $request->input(
+            'search',
+            $request->input('q', '')
+        ));
+
+        if ($keyword !== '') {
 
             $query->where(function ($q) use ($keyword) {
                 $q->where('title', 'like', "%{$keyword}%")
                     ->orWhere('category', 'like', "%{$keyword}%")
                     ->orWhere('description', 'like', "%{$keyword}%")
+                    ->orWhere('location', 'like', "%{$keyword}%")
                     ->orWhereHas('employerProfile', function ($companyQuery) use ($keyword) {
                         $companyQuery->where('company_name', 'like', "%{$keyword}%");
                     });
             });
         }
 
-        if ($request->filled('location')) {
-            $location = trim($request->input('location'));
+        $location = trim((string) $request->input('location', ''));
+
+        if ($location !== '') {
 
             $query->where(
                 'location',
@@ -43,6 +49,8 @@ class JobController extends Controller
 
         return view('jobs.index', [
             'jobs' => $jobs,
+            'search' => $keyword,
+            'location' => $location,
         ]);
     }
 
