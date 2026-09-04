@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <section class="relative overflow-hidden py-8 sm:py-12">
+    <section class="relative overflow-hidden py-8 sm:py-12" x-data="{ updatingCv: {{ $hasExistingCv ? 'false' : 'true' }} }">
 
         <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-96 bg-gradient-to-br from-brand-100/80 via-white to-accent-50/60"></div>
 
@@ -46,7 +46,7 @@
                         </h2>
 
                         <p class="mt-2 text-sm leading-6 text-slate-500">
-                            Enter your contact details and upload your CV to apply for this position.
+                            Confirm your details and choose whether to send your saved CV or update it first.
                         </p>
                     </div>
 
@@ -71,6 +71,17 @@
                         class="space-y-6"
                     >
                         @csrf
+
+                        @if ($hasExistingCv)
+                            <div class="rounded-2xl border border-brand-100 bg-brand-50/50 p-5">
+                                <p class="font-semibold text-slate-900">Your saved CV is ready</p>
+                                <p class="mt-1 text-sm text-slate-600">Send the CV already saved to your profile, or replace it with a newer version.</p>
+                                <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+                                    <button type="submit" name="use_existing_cv" value="1" class="brand-btn accent-btn w-full sm:w-auto">Send Your CV</button>
+                                    <button type="button" @click="updatingCv = !updatingCv" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-brand-200 bg-white px-5 text-sm font-semibold text-brand-700 transition hover:bg-brand-50" :aria-expanded="updatingCv.toString()">Update CV</button>
+                                </div>
+                            </div>
+                        @endif
 
                         <div>
                             <label
@@ -145,7 +156,7 @@
                             @enderror
                         </div>
 
-                        <div>
+                        <div x-show="updatingCv" x-transition x-cloak>
                             <label
                                 for="cv"
                                 class="block text-sm font-semibold text-slate-900"
@@ -158,7 +169,7 @@
                                 name="cv"
                                 type="file"
                                 accept=".pdf,.doc,.docx"
-                                required
+                                :required="updatingCv"
                                 class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700"
                             >
 
@@ -173,12 +184,11 @@
 
                         <div class="border-t border-slate-100 pt-6">
 
-                            <button
-                                type="submit"
-                                class="brand-btn accent-btn w-full sm:w-auto"
-                            >
-                                Send Application
-                            </button>
+                            @if ($hasExistingCv)
+                                <button type="submit" name="use_existing_cv" value="0" x-show="updatingCv" class="brand-btn accent-btn w-full sm:w-auto">Update CV &amp; Send Your CV</button>
+                            @else
+                                <button type="submit" name="use_existing_cv" value="0" class="brand-btn accent-btn w-full sm:w-auto">Send Application</button>
+                            @endif
 
                         </div>
 

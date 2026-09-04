@@ -16,6 +16,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -168,6 +169,33 @@ Route::middleware('guest')->group(function () {
                 'max:30',
             ],
 
+            'location' => [
+                'required_if:account_type,candidate',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'job_title' => [
+                'required_if:account_type,candidate',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'skills' => ['nullable', 'string'],
+            'education' => ['nullable', 'string'],
+            'experience' => ['nullable', 'string'],
+            'bio' => ['nullable', 'string'],
+
+            'cv' => [
+                'required_if:account_type,candidate',
+                'nullable',
+                'file',
+                'mimes:pdf,doc,docx',
+                'max:5120',
+            ],
+
             'password' => [
                 'required',
                 'confirmed',
@@ -187,6 +215,20 @@ Route::middleware('guest')->group(function () {
             'password' => $validated['password'],
             'account_type' => $validated['account_type'],
         ]);
+
+        if ($user->account_type === 'candidate') {
+            $user->candidateProfile()->create([
+                'full_name' => $validated['name'],
+                'phone' => $validated['phone'],
+                'location' => $validated['location'],
+                'job_title' => $validated['job_title'],
+                'skills' => $validated['skills'] ?? null,
+                'education' => $validated['education'] ?? null,
+                'experience' => $validated['experience'] ?? null,
+                'bio' => $validated['bio'] ?? null,
+                'cv_path' => $request->file('cv')->store('cvs', 'local'),
+            ]);
+        }
 
         /*
         |--------------------------------------------------------------------------

@@ -6,6 +6,7 @@
         showConfirmation: false,
         password: '',
         accountType: '{{ old('account_type', 'candidate') }}',
+        optionalOpen: {{ old('skills') || old('education') || old('experience') || old('bio') ? 'true' : 'false' }},
         isSubmitting: false,
         strength() {
             if (!this.password.length) return { label: 'Start typing', width: 'w-0', color: 'bg-slate-200' };
@@ -20,7 +21,7 @@
             <p class="mt-3 text-base leading-7 text-slate-600">Create your profile to find a better match, faster.</p>
         </div>
 
-        <form method="POST" action="{{ route('register.store') }}" class="space-y-5" @submit="isSubmitting = true">
+        <form method="POST" action="{{ route('register.store') }}" enctype="multipart/form-data" class="space-y-5" @submit="isSubmitting = true">
             @csrf
 
             <div>
@@ -41,6 +42,56 @@
                 <label for="phone" class="mb-2 block text-sm font-medium text-slate-800">Phone number</label>
                 <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" placeholder="+254 700 000 000" required autocomplete="tel"
                     class="block h-14 w-full rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10">
+            </div>
+
+            <div x-show="accountType === 'candidate'" x-cloak class="space-y-5">
+                <div>
+                    <label for="location" class="mb-2 block text-sm font-medium text-slate-800">Location</label>
+                    <input type="text" id="location" name="location" value="{{ old('location') }}" placeholder="Nairobi, Kenya" :required="accountType === 'candidate'" autocomplete="address-level2"
+                        class="block h-14 w-full rounded-xl border bg-white px-4 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 @error('location') border-red-500 @else border-slate-200 @enderror">
+                    @error('location')<p class="mt-2 flex items-center gap-1.5 text-sm text-red-600"><span aria-hidden="true">●</span>{{ $message }}</p>@enderror
+                </div>
+
+                <div>
+                    <label for="job_title" class="mb-2 block text-sm font-medium text-slate-800">Job title / profession</label>
+                    <input type="text" id="job_title" name="job_title" value="{{ old('job_title') }}" placeholder="Software Developer" :required="accountType === 'candidate'"
+                        class="block h-14 w-full rounded-xl border bg-white px-4 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 @error('job_title') border-red-500 @else border-slate-200 @enderror">
+                    @error('job_title')<p class="mt-2 flex items-center gap-1.5 text-sm text-red-600"><span aria-hidden="true">●</span>{{ $message }}</p>@enderror
+                </div>
+
+                <div>
+                    <label for="cv" class="mb-2 block text-sm font-medium text-slate-800">Upload CV</label>
+                    <input type="file" id="cv" name="cv" accept=".pdf,.doc,.docx" :required="accountType === 'candidate'"
+                        class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white">
+                    <p class="mt-2 text-xs text-slate-500">PDF, DOC, or DOCX. Maximum size: 5 MB.</p>
+                    @error('cv')<p class="mt-2 flex items-center gap-1.5 text-sm text-red-600"><span aria-hidden="true">●</span>{{ $message }}</p>@enderror
+                </div>
+
+                <div class="rounded-xl border border-slate-200 bg-slate-50">
+                    <button type="button" @click="optionalOpen = !optionalOpen" :aria-expanded="optionalOpen.toString()" aria-controls="optional-profile-fields" class="flex min-h-12 w-full items-center justify-between gap-4 px-4 text-left text-sm font-semibold text-slate-800">
+                        <span>Optional information</span>
+                        <svg class="h-5 w-5 transition-transform" :class="optionalOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6" /></svg>
+                    </button>
+                    <div id="optional-profile-fields" x-show="optionalOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" x-cloak class="space-y-5 border-t border-slate-200 px-4 pb-4 pt-4">
+                        <p class="text-xs text-slate-500">These details are optional and can also be added later from your profile.</p>
+                        <div>
+                            <label for="skills" class="mb-2 block text-sm font-medium text-slate-800">Skills <span class="font-normal text-slate-500">(optional)</span></label>
+                            <textarea id="skills" name="skills" rows="3" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500">{{ old('skills') }}</textarea>
+                        </div>
+                        <div>
+                            <label for="education" class="mb-2 block text-sm font-medium text-slate-800">Education <span class="font-normal text-slate-500">(optional)</span></label>
+                            <textarea id="education" name="education" rows="3" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500">{{ old('education') }}</textarea>
+                        </div>
+                        <div>
+                            <label for="experience" class="mb-2 block text-sm font-medium text-slate-800">Experience <span class="font-normal text-slate-500">(optional)</span></label>
+                            <textarea id="experience" name="experience" rows="3" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500">{{ old('experience') }}</textarea>
+                        </div>
+                        <div>
+                            <label for="bio" class="mb-2 block text-sm font-medium text-slate-800">Bio <span class="font-normal text-slate-500">(optional)</span></label>
+                            <textarea id="bio" name="bio" rows="3" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500">{{ old('bio') }}</textarea>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div>

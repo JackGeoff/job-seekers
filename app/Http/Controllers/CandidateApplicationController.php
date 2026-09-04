@@ -48,6 +48,8 @@ class CandidateApplicationController extends Controller
         */
 
         $candidateProfile = $user->candidateProfile;
+        $hasExistingCv = $candidateProfile?->cv_path
+            && Storage::disk('local')->exists($candidateProfile->cv_path);
 
         /*
         |--------------------------------------------------------------------------
@@ -76,6 +78,7 @@ class CandidateApplicationController extends Controller
         return view('jobs.apply', [
             'job' => $job,
             'candidateProfile' => $candidateProfile,
+            'hasExistingCv' => $hasExistingCv,
         ]);
     }
 
@@ -149,6 +152,16 @@ class CandidateApplicationController extends Controller
         |--------------------------------------------------------------------------
         */
 
+        $hasExistingCv = $candidateProfile->cv_path
+            && Storage::disk('local')->exists($candidateProfile->cv_path);
+        $useExistingCv = $request->boolean('use_existing_cv');
+
+        if ($useExistingCv && !$hasExistingCv) {
+            return back()
+                ->withErrors(['cv' => 'Your saved CV is no longer available. Please upload a new CV.'])
+                ->withInput();
+        }
+
         $validated = $request->validate([
             'full_name' => [
                 'required',
@@ -169,7 +182,7 @@ class CandidateApplicationController extends Controller
             ],
 
             'cv' => [
-                'required',
+                $useExistingCv && $hasExistingCv ? 'nullable' : 'required',
                 'file',
                 'mimes:pdf,doc,docx',
                 'max:5120',
@@ -182,10 +195,10 @@ class CandidateApplicationController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $cvPath = $request->file('cv')->store(
-            'cvs',
-            'local'
-        );
+        $previousCvPath = $candidateProfile->cv_path;
+        $cvPath = $useExistingCv
+            ? $previousCvPath
+            : $request->file('cv')->store('cvs', 'local');
 
         /*
         |--------------------------------------------------------------------------
@@ -198,6 +211,10 @@ class CandidateApplicationController extends Controller
             'phone' => $validated['phone'],
             'cv_path' => $cvPath,
         ]);
+
+        if (!$useExistingCv && $previousCvPath) {
+            Storage::disk('local')->delete($previousCvPath);
+        }
 
         /*
         |--------------------------------------------------------------------------
