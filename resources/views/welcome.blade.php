@@ -8,11 +8,13 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         [x-cloak] { display: none !important; }
+        [class*="aspect-[1.05/.96]"] { background-image: url("{{ asset(app()->environment('production') ? 'wp/images/hero-image.png' : 'images/hero-image.png') }}") !important; background-position: center; background-size: cover; border-color: rgb(255 255 255 / .58); box-shadow: 0 28px 60px rgb(2 20 44 / .22), inset 0 1px rgb(255 255 255 / .35); backdrop-filter: blur(12px); animation: image-arrive .8s cubic-bezier(.16, 1, .3, 1) .12s both; }
+        [class*="aspect-[1.05/.96]"] > div { display: none; }
         @keyframes rise-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
         .rise-in { animation: rise-in .6s cubic-bezier(.16,1,.3,1) both; }
         .rise-in-delay { animation: rise-in .6s .12s cubic-bezier(.16,1,.3,1) both; }
         .rise-in-late { animation: rise-in .6s .24s cubic-bezier(.16,1,.3,1) both; }
-        @media (prefers-reduced-motion: reduce) { .rise-in, .rise-in-delay, .rise-in-late { animation: none; } }
+        @media (prefers-reduced-motion: reduce) { .rise-in, .rise-in-delay, .rise-in-late, [class*="aspect-[1.05/.96]"] { animation: none; } }
     </style>
 </head>
 <body class="min-w-0 overflow-x-hidden bg-[#fafaff] font-sans text-slate-950 antialiased" x-data="{ mobileOpen: false, profileOpen: false, profile: 'job' }" @keydown.escape.window="mobileOpen = false; profileOpen = false" :class="{ 'overflow-hidden': profileOpen }">
