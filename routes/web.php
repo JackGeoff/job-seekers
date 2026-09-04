@@ -9,6 +9,7 @@ use App\Http\Controllers\EmployerJobController;
 use App\Http\Controllers\EmployerProfileController;
 use App\Http\Controllers\JobController;
 use App\Models\Application;
+use App\Models\Job;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -26,8 +27,31 @@ use Illuminate\Validation\Rules\Password as PasswordRule;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    $jobs = Job::with('employerProfile')
+        ->publiclyVisible()
+        ->latest()
+        ->take(6)
+        ->get();
+
+    return view('welcome', [
+        'jobs' => $jobs,
+    ]);
 })->name('home');
+
+Route::get('/jobs', [
+    JobController::class,
+    'index',
+])->name('jobs.index');
+
+Route::get('/jobs/{job}', [
+    JobController::class,
+    'show',
+])->name('jobs.show');
+
+Route::get('/jobs/{job}/apply', [
+    CandidateApplicationController::class,
+    'create',
+])->name('candidate.jobs.apply.create');
 
 
 /*
@@ -441,33 +465,8 @@ Route::get('/candidate/applications', [
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/jobs', [
-            JobController::class,
-            'index',
-        ])->name('jobs.index');
-
-        Route::get('/jobs/{job}', [
-            JobController::class,
-            'show',
-        ])->name('jobs.show');
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Candidate Applications
-        |--------------------------------------------------------------------------
-        */
-
         /*
          * Show dedicated application form.
-         */
-        Route::get('/jobs/{job}/apply', [
-            CandidateApplicationController::class,
-            'create',
-        ])->name('candidate.jobs.apply.create');
-
-        /*
-         * Submit application.
          */
         Route::post('/jobs/{job}/apply', [
             CandidateApplicationController::class,

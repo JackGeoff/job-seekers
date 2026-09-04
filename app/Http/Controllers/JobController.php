@@ -13,7 +13,7 @@ class JobController extends Controller
     public function index(Request $request)
     {
         $query = Job::with('employerProfile')
-            ->where('status', 'published')
+            ->publiclyVisible()
             ->latest();
 
         if ($request->filled('q')) {
@@ -51,9 +51,11 @@ class JobController extends Controller
      */
     public function show(Job $job)
     {
-        if ($job->status !== 'published') {
+        if (!$job->newQuery()->whereKey($job->getKey())->publiclyVisible()->exists()) {
             abort(404);
         }
+
+        $job->load('employerProfile');
 
         return view('jobs.show', [
             'job' => $job,

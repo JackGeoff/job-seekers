@@ -20,7 +20,7 @@ class CandidateJobController extends Controller
         }
 
         $query = Job::with('employerProfile')
-            ->where('status', 'published')
+            ->publiclyVisible()
             ->latest();
 
         /*
