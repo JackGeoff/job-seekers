@@ -8,8 +8,6 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         [x-cloak] { display: none !important; }
-        [class*="aspect-[1.05/.96]"] { background-image: url("{{ asset(app()->environment('production') ? 'wp/images/hero-image.png' : 'images/hero-image.png') }}") !important; background-position: center; background-size: cover; border: 8px solid rgb(255 255 255 / .58); box-shadow: 0 28px 60px rgb(2 20 44 / .22), inset 0 1px rgb(255 255 255 / .35); backdrop-filter: blur(12px); }
-        [class*="aspect-[1.05/.96]"] > div { display: none; }
         @keyframes rise-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
         .rise-in { animation: rise-in .6s cubic-bezier(.16,1,.3,1) both; }
         .rise-in-delay { animation: rise-in .6s .12s cubic-bezier(.16,1,.3,1) both; }
