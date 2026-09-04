@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Modern Job Search Platform for Kenya">
+    <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
 
     <title>{{ config('app.name', 'JobSeekers') }}@if (isset($title)) - {{ $title }}@endif</title>
 
