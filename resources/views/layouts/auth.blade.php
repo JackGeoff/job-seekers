@@ -37,6 +37,9 @@
                 </span>
 
                 <div class="max-w-md">
+                    <div class="auth-image-frame mb-10">
+                        <img src="{{ asset('images/register.png') }}" alt="A professional preparing for their next opportunity" class="auth-image">
+                    </div>
                     <p class="text-sm font-medium text-brand-100">JOB SEEKERS</p>
                     <h2 class="mt-4 text-4xl font-semibold leading-[1.08] tracking-tight xl:text-5xl">Find opportunities.<br>Build your future.</h2>
                     <p class="mt-5 max-w-sm text-base leading-7 text-slate-300">A clearer path from possibility to your next great role.</p>
