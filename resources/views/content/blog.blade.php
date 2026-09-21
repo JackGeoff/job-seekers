@@ -1,0 +1,5 @@
+@extends('layouts.app')
+
+@section('content')
+<section class="bg-white py-16 sm:py-24"><div class="mx-auto max-w-7xl px-5 sm:px-8"><p class="text-sm font-bold uppercase tracking-widest text-indigo-600">Jobseekers blog</p><h1 class="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">Ideas for better careers and hiring.</h1><div class="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">@foreach ($articles as $article)<article class="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><p class="text-xs font-bold uppercase tracking-wider text-indigo-600">{{ $article['category'] }}</p><h2 class="mt-3 text-xl font-bold leading-7 text-slate-950">{{ $article['title'] }}</h2><p class="mt-3 flex-1 text-sm leading-6 text-slate-600">{{ $article['excerpt'] }}</p><p class="mt-5 text-xs text-slate-500">{{ $article['date'] }}</p><a href="{{ route('blog.show', $article['slug']) }}" class="mt-5 font-bold text-indigo-600 hover:text-indigo-800">Read More <span aria-hidden="true">→</span></a></article>@endforeach</div></div></section>
+@endsection

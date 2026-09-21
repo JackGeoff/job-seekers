@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <section class="relative overflow-hidden py-10 sm:py-14">
+    <section class="relative overflow-hidden py-10 sm:py-14" x-data="{ optionalOpen: false, changeCv: {{ $errors->hasAny(['cv', 'skills', 'education', 'experience', 'bio']) ? 'true' : 'false' }} }">
         <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 bg-gradient-to-br from-brand-100/75 via-white to-accent-50/70"></div>
 
         <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -73,17 +73,33 @@
 
                 <div class="mt-5 rounded-xl border border-brand-100 bg-brand-50/50 p-4">
                     <label for="cv" class="mb-2 block text-sm font-semibold text-slate-800">CV <span class="text-red-600">*</span></label>
-                    <input id="cv" name="cv" type="file" accept=".pdf,.doc,.docx" class="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-brand-700 @error('cv') border-red-500 @enderror">
-                    <p class="mt-2 text-xs text-slate-500">PDF, DOC, or DOCX up to 5 MB. {{ $profile?->cv_path ? 'A CV is already uploaded; choose a new file to replace it.' : 'Upload your CV to complete your profile.' }}</p>
+                    @if ($profile?->cv_path)
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <p class="text-sm font-medium text-green-700">A CV is currently uploaded.</p>
+                            <div class="flex flex-wrap gap-2">
+                                <a href="{{ route('candidate.profile.cv') }}" target="_blank" rel="noopener" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-brand-200 bg-white px-4 text-sm font-semibold text-brand-700 transition hover:bg-brand-50">View current CV</a>
+                                <button type="button" @click="changeCv = !changeCv" :aria-expanded="changeCv.toString()" class="inline-flex min-h-10 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700">Change CV</button>
+                            </div>
+                        </div>
+                    @endif
+                    <div x-show="changeCv || {{ $profile?->cv_path ? 'false' : 'true' }}" x-transition x-cloak class="mt-4">
+                        <input id="cv" name="cv" type="file" accept=".pdf,.doc,.docx" {{ $profile?->cv_path ? '' : 'required' }} class="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-brand-700 @error('cv') border-red-500 @enderror">
+                        <p class="mt-2 text-xs text-slate-500">PDF, DOC, or DOCX up to 5 MB. {{ $profile?->cv_path ? 'Select a new file to replace your current CV.' : 'Upload your CV to complete your profile.' }}</p>
+                    </div>
                     @error('cv') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="mt-8 border-t border-slate-100 pt-6">
-                    <p class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Optional profile information</p>
-                    <p class="mt-1 text-sm text-slate-500">Education, skills, experience and bio can be added now or later.</p>
+                <div class="mt-8 rounded-xl border border-slate-200">
+                    <button type="button" @click="optionalOpen = !optionalOpen" :aria-expanded="optionalOpen.toString()" aria-controls="optional-profile-fields" class="flex min-h-14 w-full items-center justify-between gap-4 px-4 text-left">
+                        <span>
+                            <span class="block text-sm font-semibold text-slate-800">Optional profile information</span>
+                            <span class="mt-1 block text-xs text-slate-500">Education, skills, experience and bio</span>
+                        </span>
+                        <svg class="h-5 w-5 shrink-0 text-slate-500 transition-transform" :class="optionalOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6" /></svg>
+                    </button>
                 </div>
 
-                <div class="mt-5 grid gap-5 sm:grid-cols-2">
+                <div id="optional-profile-fields" x-show="optionalOpen" x-transition x-cloak class="mt-5 grid gap-5 border-t border-slate-100 pt-5 sm:grid-cols-2">
                     <div>
                         <label for="skills" class="mb-2 block text-sm font-semibold text-slate-800">Skills</label>
                         <textarea id="skills" name="skills" rows="4" placeholder="e.g. Laravel, project management, Excel" class="auth-input w-full rounded-xl border bg-white px-4 py-3 text-slate-950 outline-none transition @error('skills') border-red-500 @else border-slate-200 @enderror">{{ old('skills', $profile?->skills) }}</textarea>

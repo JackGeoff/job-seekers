@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -28,6 +29,39 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(EmployerProfile::class);
     }
 
+    public function employerSubscriptions(): HasMany
+    {
+        return $this->hasMany(EmployerSubscription::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $user): void {
+            if ($user->account_type === 'employer') {
+                $user->employer_onboarding_version = 1;
+            }
+        });
+    }
+
+    public function hasActiveEmployerSubscription(): bool
+    {
+        return $this->employerSubscriptions()
+            ->where('status', 'successful')
+            ->where('expires_at', '>', now())
+            ->exists();
+    }
+
+    public function hasCompletedEmployerProfile(): bool
+    {
+        $profile = $this->employerProfile;
+
+        return $profile !== null
+            && filled($profile->company_name)
+            && filled($profile->industry)
+            && filled($profile->location)
+            && filled($profile->phone);
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -38,6 +72,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'employer_onboarding_version' => 'integer',
         ];
     }
 }

@@ -8,7 +8,16 @@ class EmployerProfileController extends Controller
 {
     public function create()
     {
-        $profile = request()->user()->employerProfile;
+        $user = request()->user();
+
+        abort_unless($user->account_type === 'employer', 403);
+
+        if (!$user->hasActiveEmployerSubscription()) {
+            return redirect()->route($this->hasSelectedPlan() ? 'employer.payment' : 'employer.pricing')
+                ->with('error', 'Choose a plan and complete demo payment before setting up your company profile.');
+        }
+
+        $profile = $user->employerProfile;
         $requiredFields = ['company_name', 'industry', 'location', 'phone'];
         $completedFields = collect($requiredFields)->filter(fn ($field) => filled($profile?->{$field}))->count();
 
@@ -26,6 +35,11 @@ class EmployerProfileController extends Controller
             abort(403);
         }
 
+        if (!$user->hasActiveEmployerSubscription()) {
+            return redirect()->route($this->hasSelectedPlan() ? 'employer.payment' : 'employer.pricing')
+                ->with('error', 'Choose a plan and complete demo payment before setting up your company profile.');
+        }
+
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'industry' => 'required|string|max:255',
@@ -41,5 +55,10 @@ class EmployerProfileController extends Controller
         );
 
         return redirect()->route('employer.dashboard');
+    }
+
+    private function hasSelectedPlan(): bool
+    {
+        return in_array(session('employer.selected_package'), ['basic', 'starter', 'business'], true);
     }
 }

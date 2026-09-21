@@ -4,9 +4,12 @@ use App\Http\Controllers\CandidateApplicationController;
 use App\Http\Controllers\CandidateApplicationsController;
 use App\Http\Controllers\CandidateJobController;
 use App\Http\Controllers\CandidateProfileController;
+use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EmployerApplicationController;
 use App\Http\Controllers\EmployerJobController;
+use App\Http\Controllers\EmployerOnboardingController;
 use App\Http\Controllers\EmployerProfileController;
+use App\Http\Controllers\EmployerRegistrationController;
 use App\Http\Controllers\JobController;
 use App\Models\Application;
 use App\Models\Job;
@@ -16,7 +19,6 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -54,6 +56,11 @@ Route::get('/jobs/{job}/apply', [
     'create',
 ])->name('candidate.jobs.apply.create');
 
+Route::get('/career-guide', [ContentController::class, 'careerGuide'])->name('career-guide');
+Route::get('/pricing', [ContentController::class, 'pricing'])->name('pricing');
+Route::get('/blog', [ContentController::class, 'blog'])->name('blog.index');
+Route::get('/blog/{slug}', [ContentController::class, 'article'])->name('blog.show');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -62,6 +69,11 @@ Route::get('/jobs/{job}/apply', [
 */
 
 Route::middleware('guest')->group(function () {
+
+    Route::get('/employer/register', [EmployerRegistrationController::class, 'create'])
+        ->name('employer.register');
+    Route::post('/employer/register', [EmployerRegistrationController::class, 'store'])
+        ->name('employer.register.store');
 
     /*
     |--------------------------------------------------------------------------
@@ -116,7 +128,17 @@ Route::middleware('guest')->group(function () {
         }
 
         if ($user->account_type === 'employer') {
-            return redirect()->route('employer.dashboard');
+            if (!$user->hasActiveEmployerSubscription()) {
+                return redirect()->route(
+                    in_array(session('employer.selected_package'), ['basic', 'starter', 'business'], true)
+                        ? 'employer.payment'
+                        : 'employer.pricing'
+                );
+            }
+
+            return redirect()->route(
+                $user->hasCompletedEmployerProfile() ? 'employer.dashboard' : 'employer.profile'
+            );
         }
 
         Auth::logout();
@@ -166,6 +188,7 @@ Route::middleware('guest')->group(function () {
             'phone' => [
                 'required',
                 'string',
+                'regex:/^[0-9]+$/',
                 'max:30',
             ],
 
@@ -181,19 +204,6 @@ Route::middleware('guest')->group(function () {
                 'nullable',
                 'string',
                 'max:255',
-            ],
-
-            'skills' => ['nullable', 'string'],
-            'education' => ['nullable', 'string'],
-            'experience' => ['nullable', 'string'],
-            'bio' => ['nullable', 'string'],
-
-            'cv' => [
-                'required_if:account_type,candidate',
-                'nullable',
-                'file',
-                'mimes:pdf,doc,docx',
-                'max:5120',
             ],
 
             'password' => [
@@ -222,11 +232,6 @@ Route::middleware('guest')->group(function () {
                 'phone' => $validated['phone'],
                 'location' => $validated['location'],
                 'job_title' => $validated['job_title'],
-                'skills' => $validated['skills'] ?? null,
-                'education' => $validated['education'] ?? null,
-                'experience' => $validated['experience'] ?? null,
-                'bio' => $validated['bio'] ?? null,
-                'cv_path' => $request->file('cv')->store('cvs', 'local'),
             ]);
         }
 
@@ -418,7 +423,7 @@ Route::middleware('auth')->group(function () {
         }
 
         if ($user->account_type === 'employer') {
-            return redirect()->route('employer.profile');
+            return redirect()->route('employer.pricing');
         }
 
         return redirect()->route('dashboard');
@@ -472,6 +477,11 @@ Route::middleware('auth')->group(function () {
             'store',
         ])->name('candidate.profile.store');
 
+        Route::get('/candidate/profile/cv', [
+            CandidateProfileController::class,
+            'viewCv',
+        ])->name('candidate.profile.cv');
+
 
         /*
         |--------------------------------------------------------------------------
@@ -521,6 +531,31 @@ Route::get('/candidate/applications', [
         | Employer Profile
         |--------------------------------------------------------------------------
         */
+
+        Route::get('/employer/pricing', [
+            EmployerOnboardingController::class,
+            'pricing',
+        ])->name('employer.pricing');
+
+        Route::post('/employer/pricing', [
+            EmployerOnboardingController::class,
+            'selectPlan',
+        ])->name('employer.pricing.select');
+
+        Route::get('/employer/payment', [
+            EmployerOnboardingController::class,
+            'payment',
+        ])->name('employer.payment');
+
+        Route::post('/employer/payment', [
+            EmployerOnboardingController::class,
+            'completePayment',
+        ])->name('employer.payment.complete');
+
+        Route::get('/employer/enterprise', [
+            EmployerOnboardingController::class,
+            'enterprise',
+        ])->name('employer.enterprise');
 
         Route::get('/employer/profile', [
             EmployerProfileController::class,
@@ -614,7 +649,17 @@ Route::get('/candidate/applications', [
             }
 
             if ($user->account_type === 'employer') {
-                return redirect()->route('employer.dashboard');
+                if (!$user->hasActiveEmployerSubscription()) {
+                    return redirect()->route(
+                        in_array(session('employer.selected_package'), ['basic', 'starter', 'business'], true)
+                            ? 'employer.payment'
+                            : 'employer.pricing'
+                    );
+                }
+
+                return redirect()->route(
+                    $user->hasCompletedEmployerProfile() ? 'employer.dashboard' : 'employer.profile'
+                );
             }
 
             abort(403);
@@ -631,6 +676,18 @@ Route::get('/candidate/applications', [
         Route::get('/employer/dashboard', function () {
 
             $user = Auth::user();
+
+            abort_unless($user->account_type === 'employer', 403);
+
+            $hasActivePlan = $user->hasActiveEmployerSubscription();
+
+            if (!$hasActivePlan) {
+                return redirect()->route(in_array(session('employer.selected_package'), ['basic', 'starter', 'business'], true) ? 'employer.payment' : 'employer.pricing');
+            }
+
+            if (!$user->hasCompletedEmployerProfile()) {
+                return redirect()->route('employer.profile');
+            }
 
             $employerProfile = $user->employerProfile;
 
@@ -653,6 +710,12 @@ Route::get('/candidate/applications', [
                 'candidateCount' => $applicationQuery
                     ->distinct('candidate_profile_id')
                     ->count('candidate_profile_id'),
+
+                'subscription' => $user->employerSubscriptions()
+                    ->where('status', 'successful')
+                    ->where('expires_at', '>', now())
+                    ->latest('expires_at')
+                    ->first(),
             ]);
 
         })->name('employer.dashboard');

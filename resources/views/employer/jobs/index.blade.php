@@ -35,6 +35,11 @@
                     Dashboard
                 </a>
 
+                <a href="{{ route('employer.pricing') }}"
+                   class="shrink-0 rounded-lg px-4 py-2 text-slate-600 hover:bg-white">
+                    Pricing
+                </a>
+
                 <a href="{{ route('employer.jobs.index') }}"
                    class="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-white">
                     Jobs

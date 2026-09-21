@@ -76,4 +76,19 @@ class CandidateProfileController extends Controller
             ->route('candidate.dashboard')
             ->with('success', 'Your profile has been updated successfully.');
     }
+
+    public function viewCv(Request $request)
+    {
+        $profile = $request->user()->candidateProfile;
+
+        if (!$profile?->cv_path) {
+            abort(404, 'CV not found.');
+        }
+
+        if (!Storage::disk('local')->exists($profile->cv_path)) {
+            abort(404, 'CV file not found.');
+        }
+
+        return Storage::disk('local')->response($profile->cv_path);
+    }
 }
