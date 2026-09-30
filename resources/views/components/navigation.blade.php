@@ -71,13 +71,6 @@
                             </a>
 
                             <a
-                                href="{{ route('employer.pricing') }}"
-                                class="text-sm font-medium text-slate-600 transition-colors hover:text-brand-600"
-                            >
-                                Pricing
-                            </a>
-
-                            <a
                                 href="{{ route('employer.jobs.create') }}"
                                 class="text-sm font-medium text-slate-600 transition-colors hover:text-brand-600"
                             >

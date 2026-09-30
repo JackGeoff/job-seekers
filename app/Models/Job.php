@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
 
 class Job extends Model
 {
@@ -13,6 +13,7 @@ class Job extends Model
 
     protected $fillable = [
         'employer_profile_id',
+        'subscription_id',
         'title',
         'description',
         'category',
@@ -37,6 +38,14 @@ class Job extends Model
         return $this->belongsTo(EmployerProfile::class);
     }
 
+    public function subscription(): BelongsTo
+    {
+        return $this->belongsTo(
+            EmployerSubscription::class,
+            'subscription_id'
+        );
+    }
+
     public function applications(): HasMany
     {
         return $this->hasMany(Application::class);
@@ -47,8 +56,13 @@ class Job extends Model
         return $query
             ->where('status', 'published')
             ->where(function (Builder $query) {
-                $query->whereNull('application_deadline')
-                    ->orWhereDate('application_deadline', '>=', today());
+                $query
+                    ->whereNull('application_deadline')
+                    ->orWhereDate(
+                        'application_deadline',
+                        '>=',
+                        today()
+                    );
             });
     }
 }

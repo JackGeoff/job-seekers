@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EmployerSubscription;
 use App\Models\Job;
 use Illuminate\Http\Request;
 
 class EmployerJobController extends Controller
 {
-    /**
-     * Display the employer's jobs.
-     */
     public function index(Request $request)
     {
         $user = $request->user();
@@ -19,11 +17,21 @@ class EmployerJobController extends Controller
         }
 
         if (!$this->hasActiveSubscription($user)) {
-            return redirect()->route($this->onboardingRoute())->with('error', 'Choose a plan and complete payment before managing jobs.');
+            return redirect()
+                ->route($this->onboardingRoute())
+                ->with(
+                    'error',
+                    'Choose a plan and complete payment before managing jobs.'
+                );
         }
 
         if (!$user->hasCompletedEmployerProfile()) {
-            return redirect()->route('employer.profile')->with('error', 'Please complete your employer profile before managing jobs.');
+            return redirect()
+                ->route('employer.profile')
+                ->with(
+                    'error',
+                    'Please complete your employer profile before managing jobs.'
+                );
         }
 
         $employerProfile = $user->employerProfile;
@@ -37,30 +45,7 @@ class EmployerJobController extends Controller
         ]);
     }
 
-    /**
-     * Show the create job form.
-     */
     public function create(Request $request)
-    {
-        if ($request->user()->account_type !== 'employer') {
-            abort(403);
-        }
-
-        if (!$this->hasActiveSubscription($request->user())) {
-            return redirect()->route($this->onboardingRoute())->with('error', 'Choose a plan and complete payment before posting a job.');
-        }
-
-        if (!$request->user()->hasCompletedEmployerProfile()) {
-            return redirect()->route('employer.profile')->with('error', 'Please complete your employer profile before posting a job.');
-        }
-
-        return view('employer.jobs.create');
-    }
-
-    /**
-     * Store a new job.
-     */
-    public function store(Request $request)
     {
         $user = $request->user();
 
@@ -69,17 +54,62 @@ class EmployerJobController extends Controller
         }
 
         if (!$this->hasActiveSubscription($user)) {
-            return redirect()->route($this->onboardingRoute())->with('error', 'Choose a plan and complete payment before posting a job.');
+            return redirect()
+                ->route($this->onboardingRoute())
+                ->with(
+                    'error',
+                    'Choose a plan and complete payment before posting a job.'
+                );
         }
 
         if (!$user->hasCompletedEmployerProfile()) {
-            return redirect()->route('employer.profile')->with('error', 'Please complete your employer profile before posting a job.');
+            return redirect()
+                ->route('employer.profile')
+                ->with(
+                    'error',
+                    'Please complete your employer profile before posting a job.'
+                );
+        }
+
+        return view('employer.jobs.create');
+    }
+
+    public function store(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->account_type !== 'employer') {
+            abort(403);
+        }
+
+        $subscription = $this->activeSubscription($user);
+
+        if (!$subscription) {
+            return redirect()
+                ->route($this->onboardingRoute())
+                ->with(
+                    'error',
+                    'Choose a plan and complete payment before posting a job.'
+                );
+        }
+
+        if (!$user->hasCompletedEmployerProfile()) {
+            return redirect()
+                ->route('employer.profile')
+                ->with(
+                    'error',
+                    'Please complete your employer profile before posting a job.'
+                );
         }
 
         $employerProfile = $user->employerProfile;
 
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
             'description' => [
                 'required',
@@ -135,20 +165,35 @@ class EmployerJobController extends Controller
             ],
         ]);
 
-        if ($validated['status'] === 'published' && !$this->canPublishAnotherJob($user, $employerProfile)) {
-            return back()->withErrors(['status' => 'Your current plan has reached its job posting allowance.']);
+        /*
+        |--------------------------------------------------------------------------
+        | Check Job Posting Limit
+        |--------------------------------------------------------------------------
+        */
+
+        if ($validated['status'] === 'published') {
+            if (!$this->canPublishAnotherJob($subscription)) {
+                return back()
+                    ->withInput()
+                    ->with(
+                        'job_limit_reached',
+                        true
+                    );
+            }
+
+            $validated['subscription_id'] = $subscription->id;
         }
 
         $employerProfile->jobs()->create($validated);
 
         return redirect()
             ->route('employer.jobs.index')
-            ->with('success', 'Job created successfully.');
+            ->with(
+                'success',
+                'Job created successfully.'
+            );
     }
 
-    /**
-     * Show the edit form.
-     */
     public function edit(Request $request, Job $job)
     {
         $this->authorizeEmployerJob($request, $job);
@@ -158,15 +203,16 @@ class EmployerJobController extends Controller
         ]);
     }
 
-    /**
-     * Update an existing job.
-     */
     public function update(Request $request, Job $job)
     {
         $this->authorizeEmployerJob($request, $job);
 
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
             'description' => [
                 'required',
@@ -222,20 +268,51 @@ class EmployerJobController extends Controller
             ],
         ]);
 
-        if ($validated['status'] === 'published' && $job->status !== 'published' && !$this->canPublishAnotherJob($request->user(), $job->employerProfile)) {
-            return back()->withErrors(['status' => 'Your current plan has reached its job posting allowance.']);
+        /*
+        |--------------------------------------------------------------------------
+        | Check Limit When Publishing
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $validated['status'] === 'published'
+            && $job->status !== 'published'
+        ) {
+            $subscription = $this->activeSubscription(
+                $request->user()
+            );
+
+            if (!$subscription) {
+                return redirect()
+                    ->route($this->onboardingRoute())
+                    ->with(
+                        'error',
+                        'Your subscription is no longer active. Please choose a plan and complete payment.'
+                    );
+            }
+
+            if (!$this->canPublishAnotherJob($subscription)) {
+                return back()
+                    ->withInput()
+                    ->with(
+                        'job_limit_reached',
+                        true
+                    );
+            }
+
+            $validated['subscription_id'] = $subscription->id;
         }
 
         $job->update($validated);
 
         return redirect()
             ->route('employer.jobs.index')
-            ->with('success', 'Job updated successfully.');
+            ->with(
+                'success',
+                'Job updated successfully.'
+            );
     }
 
-    /**
-     * Close a job.
-     */
     public function close(Request $request, Job $job)
     {
         $this->authorizeEmployerJob($request, $job);
@@ -246,34 +323,43 @@ class EmployerJobController extends Controller
 
         return redirect()
             ->route('employer.jobs.index')
-            ->with('success', 'Job closed successfully.');
+            ->with(
+                'success',
+                'Job closed successfully.'
+            );
     }
 
-    /**
-     * Delete a draft job.
-     */
     public function destroy(Request $request, Job $job)
     {
         $this->authorizeEmployerJob($request, $job);
 
         if ($job->status !== 'draft') {
-            return back()->withErrors([
-                'job' => 'Only draft jobs can be deleted.',
-            ]);
+            return back()
+                ->withErrors([
+                    'job' => 'Only draft jobs can be deleted.',
+                ]);
         }
 
         $job->delete();
 
         return redirect()
             ->route('employer.jobs.index')
-            ->with('success', 'Draft job deleted successfully.');
+            ->with(
+                'success',
+                'Draft job deleted successfully.'
+            );
     }
 
-    /**
-     * Ensure the authenticated employer owns the job.
-     */
-    private function authorizeEmployerJob(Request $request, Job $job): void
-    {
+    /*
+    |--------------------------------------------------------------------------
+    | Authorize Employer Job
+    |--------------------------------------------------------------------------
+    */
+
+    private function authorizeEmployerJob(
+        Request $request,
+        Job $job
+    ): void {
         $user = $request->user();
 
         if ($user->account_type !== 'employer') {
@@ -282,7 +368,11 @@ class EmployerJobController extends Controller
 
         $employerProfile = $user->employerProfile;
 
-        if (!$employerProfile || !$user->hasActiveEmployerSubscription() || !$user->hasCompletedEmployerProfile()) {
+        if (
+            !$employerProfile
+            || !$user->hasActiveEmployerSubscription()
+            || !$user->hasCompletedEmployerProfile()
+        ) {
             abort(403);
         }
 
@@ -291,29 +381,80 @@ class EmployerJobController extends Controller
         }
     }
 
-    private function hasActiveSubscription($user): bool
-    {
+    /*
+    |--------------------------------------------------------------------------
+    | Get Active Subscription
+    |--------------------------------------------------------------------------
+    */
+
+    private function activeSubscription(
+        $user
+    ): ?EmployerSubscription {
+        return $user->employerSubscriptions()
+            ->where('status', 'successful')
+            ->where(function ($query) {
+                $query
+                    ->whereNull('starts_at')
+                    ->orWhere(
+                        'starts_at',
+                        '<=',
+                        now()
+                    );
+            })
+            ->where(
+                'expires_at',
+                '>',
+                now()
+            )
+            ->latest('expires_at')
+            ->first();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Check Job Posting Allowance
+    |--------------------------------------------------------------------------
+    */
+
+    private function canPublishAnotherJob(
+        EmployerSubscription $subscription
+    ): bool {
+        $used = $subscription->jobs()
+            ->where('status', 'published')
+            ->count();
+
+        return $used < $subscription->job_allowance;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Check Active Subscription
+    |--------------------------------------------------------------------------
+    */
+
+    private function hasActiveSubscription(
+        $user
+    ): bool {
         return $user->hasActiveEmployerSubscription();
     }
 
-    private function canPublishAnotherJob($user, $employerProfile): bool
-    {
-        $subscription = $user->employerSubscriptions()
-            ->where('status', 'successful')
-            ->where('expires_at', '>', now())
-            ->latest('expires_at')
-            ->first();
-
-        if (!$subscription) {
-            return false;
-        }
-
-        return $employerProfile->jobs()->where('status', 'published')->count() < $subscription->job_allowance;
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | Determine Onboarding Route
+    |--------------------------------------------------------------------------
+    */
 
     private function onboardingRoute(): string
     {
-        return in_array(session('employer.selected_package'), ['basic', 'starter', 'business'], true)
+        return in_array(
+            session('employer.selected_package'),
+            [
+                'basic',
+                'starter',
+                'business',
+            ],
+            true
+        )
             ? 'employer.payment'
             : 'employer.pricing';
     }

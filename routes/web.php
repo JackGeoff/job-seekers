@@ -54,6 +54,9 @@ Route::get('/jobs/{job}', [
     'show',
 ])->name('jobs.show');
 
+Route::view('/privacy', 'legal.privacy')->name('privacy');
+Route::view('/terms', 'legal.terms')->name('terms');
+
 
 /*
 |--------------------------------------------------------------------------

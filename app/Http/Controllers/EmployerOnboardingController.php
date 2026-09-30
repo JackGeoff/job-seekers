@@ -12,7 +12,10 @@ class EmployerOnboardingController extends Controller
     public const PACKAGES = [
         'basic' => [
             'name' => 'Basic',
-            'price' => 'KES 3,000', 'amount' => 3000, 'job_allowance' => 1, 'duration' => 'days:30',
+            'price' => 'KES 3,000',
+            'amount' => 3000,
+            'job_allowance' => 1,
+            'duration' => 'days:30',
             'jobs' => '1 Job',
             'validity' => '30 Days',
             'best_for' => 'Occasional hiring',
@@ -26,9 +29,13 @@ class EmployerOnboardingController extends Controller
                 'Job editing',
             ],
         ],
+
         'starter' => [
             'name' => 'Starter',
-            'price' => 'KES 10,000', 'amount' => 10000, 'job_allowance' => 5, 'duration' => 'days:60',
+            'price' => 'KES 10,000',
+            'amount' => 10000,
+            'job_allowance' => 5,
+            'duration' => 'days:60',
             'jobs' => '5 Jobs',
             'validity' => '60 Days',
             'best_for' => 'Small businesses',
@@ -44,9 +51,13 @@ class EmployerOnboardingController extends Controller
                 '1 Social Media Promotion',
             ],
         ],
+
         'business' => [
             'name' => 'Business',
-            'price' => 'KES 35,000', 'amount' => 35000, 'job_allowance' => 25, 'duration' => 'months:6',
+            'price' => 'KES 35,000',
+            'amount' => 35000,
+            'job_allowance' => 25,
+            'duration' => 'months:6',
             'jobs' => '25 Jobs',
             'validity' => '6 Months',
             'best_for' => 'Active recruiters',
@@ -64,6 +75,7 @@ class EmployerOnboardingController extends Controller
                 'Vacancy optimization',
             ],
         ],
+
         'enterprise' => [
             'name' => 'Enterprise',
             'price' => 'Custom',
@@ -86,13 +98,21 @@ class EmployerOnboardingController extends Controller
         ],
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | Employer Pricing
+    |--------------------------------------------------------------------------
+    |
+    | This page is available to:
+    |
+    | 1. New employers who have not subscribed yet.
+    | 2. Existing employers who want to upgrade or change their plan.
+    |
+    */
+
     public function pricing(Request $request)
     {
         $this->ensureEmployer($request);
-
-        if ($destination = $this->completedOnboardingDestination($request)) {
-            return redirect()->route($destination);
-        }
 
         $enterpriseEnquiry = $request->boolean('enterprise');
 
@@ -102,40 +122,70 @@ class EmployerOnboardingController extends Controller
         ]);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Select Plan
+    |--------------------------------------------------------------------------
+    */
+
     public function selectPlan(Request $request)
     {
         $this->ensureEmployer($request);
 
-        if ($destination = $this->completedOnboardingDestination($request)) {
-            return redirect()->route($destination);
-        }
-
         $packageKey = $request->input('package');
 
-        if (!is_string($packageKey) || !isset(self::PACKAGES[$packageKey]) || $packageKey === 'enterprise') {
-            return back()->withErrors(['package' => 'Please choose one of the available paid plans.']);
+        if (
+            !is_string($packageKey)
+            || !isset(self::PACKAGES[$packageKey])
+            || $packageKey === 'enterprise'
+        ) {
+            return back()->withErrors([
+                'package' => 'Please choose one of the available paid plans.',
+            ]);
         }
 
-        $request->session()->put('employer.selected_package', $packageKey);
+        /*
+        |--------------------------------------------------------------------------
+        | Store Selected Package
+        |--------------------------------------------------------------------------
+        |
+        | This works for both new subscriptions and upgrades.
+        | The existing subscription is not changed here.
+        |
+        */
+
+        $request->session()->put(
+            'employer.selected_package',
+            $packageKey
+        );
 
         return redirect()->route('employer.payment');
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payment
+    |--------------------------------------------------------------------------
+    */
 
     public function payment(Request $request)
     {
         $this->ensureEmployer($request);
 
-        if ($destination = $this->completedOnboardingDestination($request)) {
-            return redirect()->route($destination);
-        }
-
         $packageKey = session('employer.selected_package');
 
-        if (!is_string($packageKey) || !isset(self::PACKAGES[$packageKey]) || $packageKey === 'enterprise') {
-            return redirect()->route('employer.pricing')->with('error', 'Choose a paid plan before continuing to checkout.');
+        if (
+            !is_string($packageKey)
+            || !isset(self::PACKAGES[$packageKey])
+            || $packageKey === 'enterprise'
+        ) {
+            return redirect()
+                ->route('employer.pricing')
+                ->with(
+                    'error',
+                    'Choose a paid plan before continuing to checkout.'
+                );
         }
-
-        $request->session()->put('employer.selected_package', $packageKey);
 
         return view('employer.payment', [
             'package' => self::PACKAGES[$packageKey],
@@ -143,85 +193,221 @@ class EmployerOnboardingController extends Controller
         ]);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Complete Payment
+    |--------------------------------------------------------------------------
+    */
+
     public function completePayment(Request $request)
     {
         $this->ensureEmployer($request);
 
-        if ($destination = $this->completedOnboardingDestination($request)) {
-            return redirect()->route($destination);
-        }
-
         $packageKey = session('employer.selected_package');
-        if (!is_string($packageKey) || !isset(self::PACKAGES[$packageKey]) || $packageKey === 'enterprise') {
-            return redirect()->route('employer.pricing')->with('error', 'Choose a valid paid plan before checking out.');
+
+        if (
+            !is_string($packageKey)
+            || !isset(self::PACKAGES[$packageKey])
+            || $packageKey === 'enterprise'
+        ) {
+            return redirect()
+                ->route('employer.pricing')
+                ->with(
+                    'error',
+                    'Choose a valid paid plan before checking out.'
+                );
         }
 
         $method = $request->input('payment_method');
-        if (!in_array($method, ['mpesa', 'card'], true)) {
-            return back()->withErrors(['payment_method' => 'Choose M-Pesa or Card.']);
-        }
 
-        $data = $request->all();
-        if ($method === 'mpesa') {
-            $data['mpesa_phone'] = preg_replace('/\\s+/', '', (string) $request->input('mpesa_phone'));
-            $validator = Validator::make($data, ['mpesa_phone' => ['required', 'regex:/^(?:254|0)[17][0-9]{8}$/']]);
-        } else {
-            $validator = Validator::make($data, [
-                'cardholder_name' => ['required', 'string', 'max:255'],
-                'card_number' => ['required', 'regex:/^[0-9 ]{12,23}$/'],
-                'card_expiry' => ['required', 'regex:/^(0[1-9]|1[0-2])\\/[0-9]{2}$/'],
-                'card_cvv' => ['required', 'regex:/^[0-9]{3,4}$/'],
+        if (!in_array($method, ['mpesa', 'card'], true)) {
+            return back()->withErrors([
+                'payment_method' => 'Choose M-Pesa or Card.',
             ]);
         }
 
+        $data = $request->all();
+
+        /*
+        |--------------------------------------------------------------------------
+        | M-Pesa Validation
+        |--------------------------------------------------------------------------
+        */
+
+        if ($method === 'mpesa') {
+            $data['mpesa_phone'] = preg_replace(
+                '/\s+/',
+                '',
+                (string) $request->input('mpesa_phone')
+            );
+
+            $validator = Validator::make(
+                $data,
+                [
+                    'mpesa_phone' => [
+                        'required',
+                        'regex:/^(?:254|0)[17][0-9]{8}$/',
+                    ],
+                ]
+            );
+        } else {
+            /*
+            |--------------------------------------------------------------------------
+            | Card Validation
+            |--------------------------------------------------------------------------
+            */
+
+            $validator = Validator::make(
+                $data,
+                [
+                    'cardholder_name' => [
+                        'required',
+                        'string',
+                        'max:255',
+                    ],
+
+                    'card_number' => [
+                        'required',
+                        'regex:/^[0-9 ]{12,23}$/',
+                    ],
+
+                    'card_expiry' => [
+                        'required',
+                        'regex:/^(0[1-9]|1[0-2])\/[0-9]{2}$/',
+                    ],
+
+                    'card_cvv' => [
+                        'required',
+                        'regex:/^[0-9]{3,4}$/',
+                    ],
+                ]
+            );
+        }
+
         if ($validator->fails()) {
-            // Deliberately do not flash old input: it could contain demo card fields.
+            /*
+            |--------------------------------------------------------------------------
+            | Do Not Flash Payment Input
+            |--------------------------------------------------------------------------
+            |
+            | This prevents payment/card fields from being stored in
+            | the session.
+            |
+            */
+
             return back()->withErrors($validator);
         }
 
         $package = self::PACKAGES[$packageKey];
-        $now = now();
-        [$unit, $value] = explode(':', $package['duration']);
-        $expiresAt = $unit === 'months' ? $now->copy()->addMonths((int) $value) : $now->copy()->addDays((int) $value);
 
-        DB::transaction(function () use ($request, $packageKey, $package, $method, $now, $expiresAt) {
-            $request->user()->employerSubscriptions()->create([
-                'plan' => $packageKey,
-                'amount' => $package['amount'],
-                'payment_method' => $method,
-                'status' => 'successful',
-                'transaction_reference' => 'DEMO-'.Str::upper(Str::random(10)),
-                'paid_at' => $now,
-                'starts_at' => $now,
-                'expires_at' => $expiresAt,
-                'job_allowance' => $package['job_allowance'],
-            ]);
+        $now = now();
+
+        [$unit, $value] = explode(
+            ':',
+            $package['duration']
+        );
+
+        $expiresAt = $unit === 'months'
+            ? $now->copy()->addMonths((int) $value)
+            : $now->copy()->addDays((int) $value);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create New Subscription
+        |--------------------------------------------------------------------------
+        |
+        | IMPORTANT:
+        |
+        | We create a NEW subscription.
+        |
+        | We do not modify or delete the employer's existing subscription.
+        | This means an upgrade only takes effect after payment succeeds.
+        |
+        */
+
+        DB::transaction(function () use (
+            $request,
+            $packageKey,
+            $package,
+            $method,
+            $now,
+            $expiresAt
+        ) {
+            $request->user()
+                ->employerSubscriptions()
+                ->create([
+                    'plan' => $packageKey,
+                    'amount' => $package['amount'],
+                    'payment_method' => $method,
+                    'status' => 'successful',
+                    'transaction_reference' => 'DEMO-' . Str::upper(
+                        Str::random(10)
+                    ),
+                    'paid_at' => $now,
+                    'starts_at' => $now,
+                    'expires_at' => $expiresAt,
+                    'job_allowance' => $package['job_allowance'],
+                ]);
         });
 
-        $request->session()->forget('employer.selected_package');
+        /*
+        |--------------------------------------------------------------------------
+        | Clear Selected Package
+        |--------------------------------------------------------------------------
+        */
 
-        return redirect()->route('employer.profile')->with('success', 'Demo payment successful. Complete your company profile to start hiring.');
+        $request->session()->forget(
+            'employer.selected_package'
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Continue To Employer Profile
+        |--------------------------------------------------------------------------
+        |
+        | The profile controller/dashboard logic can determine whether
+        | the employer still needs to complete their profile.
+        |
+        */
+
+        return redirect()
+            ->route('employer.profile')
+            ->with(
+                'success',
+                'Payment successful. Your new plan is now active.'
+            );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enterprise
+    |--------------------------------------------------------------------------
+    */
 
     public function enterprise(Request $request)
     {
         $this->ensureEmployer($request);
 
-        return redirect()->route('employer.pricing', ['enterprise' => 1]);
+        return redirect()->route(
+            'employer.pricing',
+            [
+                'enterprise' => 1,
+            ]
+        );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ensure Employer
+    |--------------------------------------------------------------------------
+    */
 
     private function ensureEmployer(Request $request): void
     {
-        abort_unless($request->user()->account_type === 'employer', 403);
-    }
-
-    private function completedOnboardingDestination(Request $request): ?string
-    {
-        $user = $request->user();
-        $activeSubscription = $user->hasActiveEmployerSubscription();
-
-        return $activeSubscription
-            ? ($user->hasCompletedEmployerProfile() ? 'employer.dashboard' : 'employer.profile')
-            : null;
+        abort_unless(
+            $request->user()->account_type === 'employer',
+            403
+        );
     }
 }
+
