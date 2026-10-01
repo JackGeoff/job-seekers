@@ -77,8 +77,9 @@
                         Job Description
                     </h2>
 
-                    <div class="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600">
-                        {{ $job->description }}
+                   <div class="job-description mt-4">
+                        {!! $job->description !!}
+                        
                     </div>
 
                 </div>
@@ -104,6 +105,41 @@
                 {{-- ========================================================= --}}
                 {{-- APPLICATION SECTION --}}
                 {{-- ========================================================= --}}
+
+                @if ($job->external_application_url)
+
+                    <div class="mt-8 border-t border-slate-100 pt-8">
+
+                        <div class="rounded-2xl border border-brand-100 bg-brand-50/50 p-5 sm:p-6">
+
+                            <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+
+                                <div>
+                                    <h2 class="text-lg font-semibold text-slate-950">
+                                        Interested in this position?
+                                    </h2>
+
+                                    <p class="mt-1 text-sm text-slate-600">
+                                        Continue to the employer's external application form.
+                                    </p>
+                                </div>
+
+                                <a
+                                    href="{{ $job->external_application_url }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="brand-btn accent-btn inline-flex w-full items-center justify-center sm:w-auto"
+                                >
+                                    Apply for this Job
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                @else
 
                 @auth
 
@@ -303,6 +339,8 @@
                     </div>
 
                 @endauth
+
+                @endif
 
             </div>
 

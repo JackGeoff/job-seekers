@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\JobDescriptionSanitizer;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -23,6 +25,7 @@ class Job extends Model
         'salary_max',
         'salary_currency',
         'application_deadline',
+        'external_application_url',
         'status',
     ];
 
@@ -31,6 +34,24 @@ class Job extends Model
         return [
             'application_deadline' => 'date',
         ];
+    }
+
+    protected function description(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): string => app(JobDescriptionSanitizer::class)
+                ->sanitize($value),
+            set: fn (?string $value): string => app(JobDescriptionSanitizer::class)
+                ->sanitize($value),
+        );
+    }
+
+    protected function descriptionText(): Attribute
+    {
+        return Attribute::get(
+            fn (): string => app(JobDescriptionSanitizer::class)
+                ->plainText($this->description)
+        );
     }
 
     public function employerProfile(): BelongsTo

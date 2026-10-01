@@ -4,10 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\EmployerSubscription;
 use App\Models\Job;
+use App\Support\JobDescriptionSanitizer;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class EmployerJobController extends Controller
 {
+    public function __construct(
+        private readonly JobDescriptionSanitizer $descriptionSanitizer
+    ) {}
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -103,6 +109,7 @@ class EmployerJobController extends Controller
         }
 
         $employerProfile = $user->employerProfile;
+        $this->sanitizeDescriptionInput($request);
 
         $validated = $request->validate([
             'title' => [
@@ -114,7 +121,6 @@ class EmployerJobController extends Controller
             'description' => [
                 'required',
                 'string',
-                'min:50',
             ],
 
             'category' => [
@@ -159,11 +165,20 @@ class EmployerJobController extends Controller
                 'after_or_equal:today',
             ],
 
+            'external_application_url' => [
+                'nullable',
+                'string',
+                'max:2048',
+                'url:http,https',
+            ],
+
             'status' => [
                 'required',
                 'in:draft,published',
             ],
         ]);
+
+        $this->validateDescriptionText($validated['description']);
 
         /*
         |--------------------------------------------------------------------------
@@ -206,6 +221,7 @@ class EmployerJobController extends Controller
     public function update(Request $request, Job $job)
     {
         $this->authorizeEmployerJob($request, $job);
+        $this->sanitizeDescriptionInput($request);
 
         $validated = $request->validate([
             'title' => [
@@ -217,7 +233,6 @@ class EmployerJobController extends Controller
             'description' => [
                 'required',
                 'string',
-                'min:50',
             ],
 
             'category' => [
@@ -262,11 +277,20 @@ class EmployerJobController extends Controller
                 'after_or_equal:today',
             ],
 
+            'external_application_url' => [
+                'nullable',
+                'string',
+                'max:2048',
+                'url:http,https',
+            ],
+
             'status' => [
                 'required',
                 'in:draft,published,closed',
             ],
         ]);
+
+        $this->validateDescriptionText($validated['description']);
 
         /*
         |--------------------------------------------------------------------------
@@ -378,6 +402,26 @@ class EmployerJobController extends Controller
 
         if ($job->employer_profile_id !== $employerProfile->id) {
             abort(403);
+        }
+    }
+
+    private function sanitizeDescriptionInput(Request $request): void
+    {
+        $description = $request->input('description');
+
+        if (is_string($description)) {
+            $request->merge([
+                'description' => $this->descriptionSanitizer->sanitize($description),
+            ]);
+        }
+    }
+
+    private function validateDescriptionText(string $description): void
+    {
+        if (!$this->descriptionSanitizer->hasMinimumText($description, 50)) {
+            throw ValidationException::withMessages([
+                'description' => 'The description must contain at least 50 characters of meaningful text.',
+            ]);
         }
     }
 

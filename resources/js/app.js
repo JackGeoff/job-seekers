@@ -1,5 +1,9 @@
 import Alpine from 'alpinejs';
 
+if (document.querySelector('[data-job-description-editor]')) {
+    import('./job-description-editor.js');
+}
+
 // Initialize Alpine.js
 window.Alpine = Alpine;
 Alpine.start();

@@ -113,11 +113,27 @@
 
                         {{-- Description --}}
                         <div>
+
+                            @php
+                                $descriptionSanitizer = app(\App\Support\JobDescriptionSanitizer::class);
+                                $descriptionHtml = $descriptionSanitizer->sanitize(old('description', $job->description));
+                                $descriptionText = $descriptionSanitizer->plainText($descriptionHtml);
+                            @endphp
+
                             <label for="description"
+                                id="description-label"
                                    class="mb-2 block text-sm font-semibold text-slate-800">
                                 Job Description
                                 <span class="text-red-600">*</span>
                             </label>
+
+                            <div data-job-description-editor>
+                                <div
+                                    data-quill-editor
+                                    data-initial-html="{{ $descriptionHtml }}"
+                                    aria-label="Job Description editor"
+                                    hidden
+                                ></div>
 
                             <textarea
                                 id="description"
@@ -125,7 +141,8 @@
                                 rows="8"
                                 required
                                 class="auth-input w-full rounded-xl border bg-white px-4 py-3 text-slate-950 outline-none transition @error('description') border-red-500 @else border-slate-200 @enderror"
-                            >{{ old('description', $job->description) }}</textarea>
+                            >{{ $descriptionText }}</textarea>
+                            </div>
 
                             @error('description')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -349,6 +366,42 @@
                         >
 
                         @error('application_deadline')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                </div>
+
+                {{-- External application link --}}
+                <div class="mt-10 border-t border-slate-100 pt-8">
+
+                    <div>
+                        <p class="text-lg font-semibold text-slate-950">
+                            External Application Link (Optional)
+                        </p>
+
+                        <p class="mt-1 text-sm text-slate-500">
+                            Candidates will be redirected to an external website or application form when they click Apply Now. Leave this field empty to use the platform's internal application process.
+                        </p>
+                    </div>
+
+                    <div class="mt-6 max-w-2xl">
+                        <label for="external_application_url"
+                               class="mb-2 block text-sm font-semibold text-slate-800">
+                            External Application URL
+                        </label>
+
+                        <input
+                            id="external_application_url"
+                            name="external_application_url"
+                            type="url"
+                            value="{{ old('external_application_url', $job->external_application_url) }}"
+                            maxlength="2048"
+                            placeholder="https://example.com/apply"
+                            class="auth-input h-12 w-full rounded-xl border bg-white px-4 text-slate-950 outline-none transition @error('external_application_url') border-red-500 @else border-slate-200 @enderror"
+                        >
+
+                        @error('external_application_url')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>

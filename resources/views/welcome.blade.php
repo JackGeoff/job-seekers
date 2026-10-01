@@ -91,7 +91,7 @@
                                 </span>
                             </div>
 
-                            <p class="job-description-snippet mt-4 max-w-3xl text-sm leading-6 text-slate-600">{{ $job->description }}</p>
+                            <p class="job-description-snippet mt-4 max-w-3xl text-sm leading-6 text-slate-600">{{ $job->description_text }}</p>
 
                             <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
                                 @if ($job->salary_min || $job->salary_max)

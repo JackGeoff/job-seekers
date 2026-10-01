@@ -28,7 +28,7 @@
     "src": "_instrument-sans-600-normal-B9e8oLYv.woff"
   },
   "resources/css/app.css": {
-    "file": "assets/app-Bunv_pAU.css",
+    "file": "assets/app-DV9FH1Z4.css",
     "name": "app",
     "names": [
       "app.css"
@@ -37,9 +37,21 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-CFn0eOwj.js",
+    "file": "assets/app-vr-u8JWP.js",
     "name": "app",
     "src": "resources/js/app.js",
-    "isEntry": true
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/job-description-editor.js"
+    ]
+  },
+  "resources/js/job-description-editor.js": {
+    "file": "assets/job-description-editor-B3Q-hkZi.js",
+    "name": "job-description-editor",
+    "src": "resources/js/job-description-editor.js",
+    "isDynamicEntry": true,
+    "css": [
+      "assets/job-description-editor-DVB7LGv8.css"
+    ]
   }
 }
