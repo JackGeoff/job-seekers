@@ -26,7 +26,7 @@
                   action="{{ route('jobs.index') }}"
                   class="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
 
-                <div class="grid gap-3 lg:grid-cols-[1fr_1fr_auto]">
+                <div class="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_auto]">
 
                     <input
                         type="text"
@@ -43,6 +43,23 @@
                         placeholder="Location"
                         class="h-12 rounded-xl border border-slate-200 px-4 text-slate-900 outline-none focus:border-brand-500"
                     >
+
+                    <select
+                        name="category"
+                        aria-label="Filter by category"
+                        class="h-12 min-w-0 rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-brand-500"
+                    >
+                        <option value="">All categories</option>
+                        @foreach ($categoryGroups as $group => $categories)
+                            <optgroup label="{{ $group }}">
+                                @foreach ($categories as $categoryOption)
+                                    <option value="{{ $categoryOption }}" @selected($category === $categoryOption)>
+                                        {{ $categoryOption }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
 
                     <button
                         type="submit"

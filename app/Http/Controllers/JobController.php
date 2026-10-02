@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
+use App\Support\JobCategories;
 use Illuminate\Http\Request;
 
 class JobController extends Controller
@@ -45,12 +46,22 @@ class JobController extends Controller
             );
         }
 
+        $category = trim((string) $request->input('category', ''));
+
+        if (in_array($category, JobCategories::values(), true)) {
+            $query->where('category', $category);
+        } else {
+            $category = '';
+        }
+
         $jobs = $query->paginate(10)->withQueryString();
 
         return view('jobs.index', [
             'jobs' => $jobs,
             'search' => $keyword,
             'location' => $location,
+            'category' => $category,
+            'categoryGroups' => JobCategories::grouped(),
         ]);
     }
 

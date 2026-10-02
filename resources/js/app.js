@@ -1,4 +1,5 @@
 import Alpine from 'alpinejs';
+import './job-category-autocomplete.js';
 
 if (document.querySelector('[data-job-description-editor]')) {
     import('./job-description-editor.js');

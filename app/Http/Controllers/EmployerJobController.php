@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\EmployerSubscription;
 use App\Models\Job;
+use App\Support\JobCategories;
 use App\Support\JobDescriptionSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -77,7 +78,9 @@ class EmployerJobController extends Controller
                 );
         }
 
-        return view('employer.jobs.create');
+        return view('employer.jobs.create', [
+            'categoryGroups' => JobCategories::grouped(),
+        ]);
     }
 
     public function store(Request $request)
@@ -127,6 +130,7 @@ class EmployerJobController extends Controller
                 'required',
                 'string',
                 'max:255',
+                JobCategories::validationRule(),
             ],
 
             'location' => [
@@ -215,6 +219,7 @@ class EmployerJobController extends Controller
 
         return view('employer.jobs.edit', [
             'job' => $job,
+            'categoryGroups' => JobCategories::grouped(),
         ]);
     }
 
@@ -239,6 +244,7 @@ class EmployerJobController extends Controller
                 'required',
                 'string',
                 'max:255',
+                JobCategories::validationRule($job->category),
             ],
 
             'location' => [

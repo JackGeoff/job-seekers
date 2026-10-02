@@ -190,34 +190,10 @@
 
 
                         {{-- Category --}}
-                        <div>
-
-                            <label
-                                for="category"
-                                class="mb-2 block text-sm font-semibold text-slate-800"
-                            >
-                                Category
-                                <span class="text-red-600">*</span>
-                            </label>
-
-                            <input
-                                id="category"
-                                name="category"
-                                type="text"
-                                value="{{ old('category') }}"
-                                required
-                                maxlength="255"
-                                placeholder="e.g. Information Technology"
-                                class="auth-input h-12 w-full rounded-xl border bg-white px-4 text-slate-950 outline-none transition @error('category') border-red-500 @else border-slate-200 @enderror"
-                            >
-
-                            @error('category')
-                                <p class="mt-2 text-sm text-red-600">
-                                    {{ $message }}
-                                </p>
-                            @enderror
-
-                        </div>
+                        @include('employer.jobs.partials.category-select', [
+                            'categoryGroups' => $categoryGroups,
+                            'selectedCategory' => old('category', ''),
+                        ])
 
 
                         {{-- Description --}}
