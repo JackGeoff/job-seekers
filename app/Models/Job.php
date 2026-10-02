@@ -16,6 +16,7 @@ class Job extends Model
     protected $fillable = [
         'employer_profile_id',
         'subscription_id',
+        'submission_key',
         'title',
         'description',
         'category',
@@ -77,13 +78,12 @@ class Job extends Model
         return $query
             ->where('status', 'published')
             ->where(function (Builder $query) {
-                $query
-                    ->whereNull('application_deadline')
-                    ->orWhereDate(
-                        'application_deadline',
-                        '>=',
-                        today()
-                    );
+                $query->whereDate('application_deadline', '>=', today())
+                    ->orWhere(function (Builder $legacyVisibility) {
+                        $legacyVisibility
+                            ->whereNull('application_deadline')
+                            ->where('created_at', '>=', now()->subDays(30));
+                    });
             });
     }
 }

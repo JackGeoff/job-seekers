@@ -4,17 +4,22 @@
     $selectedCategory = $categoryOptions->contains($requestedCategory)
         ? $requestedCategory
         : ($legacyCategory ?? '');
+    $categoryId = 'category-' . ($index ?? 'job');
+    $filterId = $categoryId . '-filter';
+    $menuId = $categoryId . '-options';
+    $statusId = $categoryId . '-status';
+    $categoryErrorKey = $categoryErrorKey ?? 'category';
 @endphp
 
-<div data-category-dropdown class="relative">
-    <label for="category" class="mb-2 block text-sm font-semibold text-slate-800">
+<div id="{{ $categoryId }}-dropdown" data-category-dropdown class="relative">
+    <label for="{{ $categoryId }}" class="mb-2 block text-sm font-semibold text-slate-800">
         Category
         <span class="text-red-600">*</span>
     </label>
 
     <div class="relative">
         <input
-            id="category"
+            id="{{ $categoryId }}"
             name="category"
             data-category-value
             type="text"
@@ -24,8 +29,8 @@
             role="combobox"
             aria-haspopup="listbox"
             aria-expanded="false"
-            aria-controls="category-options"
-            aria-describedby="category-status"
+            aria-controls="{{ $menuId }}"
+            aria-describedby="{{ $statusId }}"
             placeholder="Select a job category"
             class="auth-input h-12 w-full cursor-pointer rounded-xl border bg-white px-4 pr-11 text-left text-slate-950 outline-none transition @error('category') border-red-500 @else border-slate-200 @enderror"
         >
@@ -45,9 +50,9 @@
         class="absolute left-0 right-0 top-full z-50 mt-2 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
     >
         <div class="border-b border-slate-100 p-3">
-            <label for="category-filter" class="sr-only">Search categories</label>
+            <label for="{{ $filterId }}" class="sr-only">Search categories</label>
             <input
-                id="category-filter"
+                id="{{ $filterId }}"
                 data-category-filter
                 type="search"
                 autocomplete="off"
@@ -57,7 +62,7 @@
         </div>
 
         <ul
-            id="category-options"
+            id="{{ $menuId }}"
             data-category-options
             role="listbox"
             aria-label="Job categories"
@@ -69,10 +74,10 @@
         </p>
     </div>
 
-    <p id="category-status" data-category-status class="sr-only" role="status" aria-live="polite"></p>
+    <p id="{{ $statusId }}" data-category-status class="sr-only" role="status" aria-live="polite"></p>
     <script type="application/json" data-category-data>@json($categoryGroups)</script>
 
-    @error('category')
+    @error($categoryErrorKey)
         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
     @enderror
 </div>

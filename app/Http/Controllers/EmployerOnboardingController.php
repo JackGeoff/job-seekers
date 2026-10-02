@@ -2,102 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EmployerPaymentOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class EmployerOnboardingController extends Controller
 {
-    public const PACKAGES = [
-        'basic' => [
-            'name' => 'Basic',
-            'price' => 'KES 3,000',
-            'amount' => 3000,
-            'job_allowance' => 1,
-            'duration' => 'days:30',
-            'jobs' => '1 Job',
-            'validity' => '30 Days',
-            'best_for' => 'Occasional hiring',
-            'features' => [
-                '1 job posting',
-                '30-day visibility',
-                'Candidate applications',
-                'Employer profile',
-                'Application management',
-                'Email application notifications',
-                'Job editing',
-            ],
-        ],
-
-        'starter' => [
-            'name' => 'Starter',
-            'price' => 'KES 10,000',
-            'amount' => 10000,
-            'job_allowance' => 5,
-            'duration' => 'days:60',
-            'jobs' => '5 Jobs',
-            'validity' => '60 Days',
-            'best_for' => 'Small businesses',
-            'features' => [
-                '5 job postings',
-                '30-day visibility per job',
-                'Employer profile',
-                'Candidate application management',
-                'Email notifications',
-                'Job editing',
-                'Basic employer branding',
-                '1 Featured Job',
-                '1 Social Media Promotion',
-            ],
-        ],
-
-        'business' => [
-            'name' => 'Business',
-            'price' => 'KES 35,000',
-            'amount' => 35000,
-            'job_allowance' => 25,
-            'duration' => 'months:6',
-            'jobs' => '25 Jobs',
-            'validity' => '6 Months',
-            'best_for' => 'Active recruiters',
-            'features' => [
-                '25 job postings',
-                '30-day visibility per job',
-                'Enhanced company profile',
-                'Candidate application management',
-                'Employer branding',
-                '5 Featured Jobs',
-                '3 Homepage Features',
-                '5 Social Media Promotions',
-                'Priority support',
-                'Basic recruitment consultation',
-                'Vacancy optimization',
-            ],
-        ],
-
-        'enterprise' => [
-            'name' => 'Enterprise',
-            'price' => 'Custom',
-            'jobs' => '50+ Jobs',
-            'validity' => '12 Months / Contract',
-            'best_for' => 'Large organisations',
-            'features' => [
-                'Large-volume job posting',
-                'Dedicated employer account',
-                'Enhanced company profile',
-                'Priority vacancy placement',
-                'Featured vacancies',
-                'Social media promotion',
-                'Recruitment support',
-                'Shortlisting support',
-                'Screening services',
-                'Dedicated account management',
-                'Custom terms and reporting',
-            ],
-        ],
-    ];
-
     /*
     |--------------------------------------------------------------------------
     | Employer Pricing
@@ -117,7 +29,7 @@ class EmployerOnboardingController extends Controller
         $enterpriseEnquiry = $request->boolean('enterprise');
 
         return view('employer.pricing', [
-            'packages' => self::PACKAGES,
+            'packages' => config('employer_plans', []),
             'enterpriseEnquiry' => $enterpriseEnquiry,
         ]);
     }
@@ -133,16 +45,19 @@ class EmployerOnboardingController extends Controller
         $this->ensureEmployer($request);
 
         $packageKey = $request->input('package');
+        $packages = config('employer_plans', []);
 
         if (
             !is_string($packageKey)
-            || !isset(self::PACKAGES[$packageKey])
+            || !isset($packages[$packageKey])
             || $packageKey === 'enterprise'
         ) {
             return back()->withErrors([
                 'package' => 'Please choose one of the available paid plans.',
             ]);
         }
+
+        $request->session()->put('employer.selected_package', $packageKey);
 
         /*
         |--------------------------------------------------------------------------
@@ -154,12 +69,7 @@ class EmployerOnboardingController extends Controller
         |
         */
 
-        $request->session()->put(
-            'employer.selected_package',
-            $packageKey
-        );
-
-        return redirect()->route('employer.payment');
+        return redirect()->route('employer.payment', $packageKey);
     }
 
     /*
@@ -168,15 +78,16 @@ class EmployerOnboardingController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function payment(Request $request)
+    public function payment(Request $request, ?string $package = null)
     {
         $this->ensureEmployer($request);
 
-        $packageKey = session('employer.selected_package');
+        $packageKey = $package ?? session('employer.selected_package');
+        $packages = config('employer_plans', []);
 
         if (
             !is_string($packageKey)
-            || !isset(self::PACKAGES[$packageKey])
+            || !isset($packages[$packageKey])
             || $packageKey === 'enterprise'
         ) {
             return redirect()
@@ -188,8 +99,10 @@ class EmployerOnboardingController extends Controller
         }
 
         return view('employer.payment', [
-            'package' => self::PACKAGES[$packageKey],
+            'package' => $packages[$packageKey],
             'packageKey' => $packageKey,
+            'account' => $request->user(),
+            'companyProfile' => $request->user()->employerProfile,
         ]);
     }
 
@@ -199,183 +112,66 @@ class EmployerOnboardingController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function completePayment(Request $request)
+    public function createPaymentOrder(Request $request)
     {
         $this->ensureEmployer($request);
 
-        $packageKey = session('employer.selected_package');
+        $packages = config('employer_plans', []);
+        $packageKeys = array_keys(array_filter(
+            $packages,
+            fn (array $package): bool => $package['amount'] !== null
+        ));
 
-        if (
-            !is_string($packageKey)
-            || !isset(self::PACKAGES[$packageKey])
-            || $packageKey === 'enterprise'
-        ) {
+        $validated = $request->validate([
+            'package' => ['required', 'string', Rule::in($packageKeys)],
+            'payment_method' => ['required', Rule::in(['mpesa', 'card', 'bank_transfer'])],
+        ]);
+
+        $packageKey = $validated['package'];
+        $package = $packages[$packageKey] ?? null;
+
+        if (!$package || $package['amount'] === null) {
             return redirect()
                 ->route('employer.pricing')
                 ->with(
                     'error',
-                    'Choose a valid paid plan before checking out.'
+                    'Choose a valid standard plan before selecting a payment method.'
                 );
         }
 
-        $method = $request->input('payment_method');
-
-        if (!in_array($method, ['mpesa', 'card'], true)) {
-            return back()->withErrors([
-                'payment_method' => 'Choose M-Pesa or Card.',
-            ]);
-        }
-
-        $data = $request->all();
-
-        /*
-        |--------------------------------------------------------------------------
-        | M-Pesa Validation
-        |--------------------------------------------------------------------------
-        */
-
-        if ($method === 'mpesa') {
-            $data['mpesa_phone'] = preg_replace(
-                '/\s+/',
-                '',
-                (string) $request->input('mpesa_phone')
-            );
-
-            $validator = Validator::make(
-                $data,
-                [
-                    'mpesa_phone' => [
-                        'required',
-                        'regex:/^(?:254|0)[17][0-9]{8}$/',
-                    ],
-                ]
-            );
-        } else {
-            /*
-            |--------------------------------------------------------------------------
-            | Card Validation
-            |--------------------------------------------------------------------------
-            */
-
-            $validator = Validator::make(
-                $data,
-                [
-                    'cardholder_name' => [
-                        'required',
-                        'string',
-                        'max:255',
-                    ],
-
-                    'card_number' => [
-                        'required',
-                        'regex:/^[0-9 ]{12,23}$/',
-                    ],
-
-                    'card_expiry' => [
-                        'required',
-                        'regex:/^(0[1-9]|1[0-2])\/[0-9]{2}$/',
-                    ],
-
-                    'card_cvv' => [
-                        'required',
-                        'regex:/^[0-9]{3,4}$/',
-                    ],
-                ]
-            );
-        }
-
-        if ($validator->fails()) {
-            /*
-            |--------------------------------------------------------------------------
-            | Do Not Flash Payment Input
-            |--------------------------------------------------------------------------
-            |
-            | This prevents payment/card fields from being stored in
-            | the session.
-            |
-            */
-
-            return back()->withErrors($validator);
-        }
-
-        $package = self::PACKAGES[$packageKey];
-
         $now = now();
+        $order = DB::transaction(fn () => EmployerPaymentOrder::create([
+            'user_id' => $request->user()->id,
+            'order_reference' => (string) Str::uuid(),
+            'plan' => $packageKey,
+            'amount' => $package['amount'],
+            'job_allowance' => $package['job_allowance'],
+            'duration_unit' => $package['duration_unit'],
+            'duration_value' => $package['duration_value'],
+            'payment_method' => $validated['payment_method'],
+            'status' => 'pending',
+            'expires_at' => $now->copy()->addDay(),
+        ]));
 
-        [$unit, $value] = explode(
-            ':',
-            $package['duration']
+        return redirect()->route(
+            'employer.payment.pending',
+            $order->order_reference
         );
+    }
 
-        $expiresAt = $unit === 'months'
-            ? $now->copy()->addMonths((int) $value)
-            : $now->copy()->addDays((int) $value);
+    public function paymentPending(Request $request, string $orderReference)
+    {
+        $this->ensureEmployer($request);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Create New Subscription
-        |--------------------------------------------------------------------------
-        |
-        | IMPORTANT:
-        |
-        | We create a NEW subscription.
-        |
-        | We do not modify or delete the employer's existing subscription.
-        | This means an upgrade only takes effect after payment succeeds.
-        |
-        */
+        $order = EmployerPaymentOrder::query()
+            ->where('user_id', $request->user()->id)
+            ->where('order_reference', $orderReference)
+            ->firstOrFail();
 
-        DB::transaction(function () use (
-            $request,
-            $packageKey,
-            $package,
-            $method,
-            $now,
-            $expiresAt
-        ) {
-            $request->user()
-                ->employerSubscriptions()
-                ->create([
-                    'plan' => $packageKey,
-                    'amount' => $package['amount'],
-                    'payment_method' => $method,
-                    'status' => 'successful',
-                    'transaction_reference' => 'DEMO-' . Str::upper(
-                        Str::random(10)
-                    ),
-                    'paid_at' => $now,
-                    'starts_at' => $now,
-                    'expires_at' => $expiresAt,
-                    'job_allowance' => $package['job_allowance'],
-                ]);
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Clear Selected Package
-        |--------------------------------------------------------------------------
-        */
-
-        $request->session()->forget(
-            'employer.selected_package'
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Continue To Employer Profile
-        |--------------------------------------------------------------------------
-        |
-        | The profile controller/dashboard logic can determine whether
-        | the employer still needs to complete their profile.
-        |
-        */
-
-        return redirect()
-            ->route('employer.profile')
-            ->with(
-                'success',
-                'Payment successful. Your new plan is now active.'
-            );
+        return view('employer.payment-pending', [
+            'order' => $order,
+            'package' => config("employer_plans.{$order->plan}"),
+        ]);
     }
 
     /*

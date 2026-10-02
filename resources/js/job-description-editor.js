@@ -14,14 +14,26 @@ const editorOptions = {
     },
 };
 
-document.querySelectorAll('[data-job-description-editor]').forEach((wrapper) => {
+export function initializeJobDescriptionEditors(root = document) {
+    const wrappers = root.matches?.('[data-job-description-editor]')
+        ? [root]
+        : root.querySelectorAll('[data-job-description-editor]');
+
+    wrappers.forEach((wrapper) => {
+    if (wrapper.dataset.editorInitialized === 'true') {
+        return;
+    }
+
     const editorElement = wrapper.querySelector('[data-quill-editor]');
-    const source = wrapper.querySelector('textarea[name="description"]');
+    const source = wrapper.querySelector('[data-job-description-source]')
+        || wrapper.querySelector('textarea[name="description"], textarea[name$="[description]"]');
     const form = wrapper.closest('form');
 
     if (!editorElement || !source || !form) {
         return;
     }
+
+    wrapper.dataset.editorInitialized = 'true';
 
     const editor = new Quill(editorElement, {
         ...editorOptions,
@@ -51,3 +63,4 @@ document.querySelectorAll('[data-job-description-editor]').forEach((wrapper) => 
     source.required = false;
     syncDescription();
 });
+}

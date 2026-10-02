@@ -122,6 +122,7 @@
                             <textarea
                                 id="description"
                                 name="description"
+                                data-job-description-source
                                 rows="8"
                                 required
                                 class="auth-input w-full rounded-xl border bg-white px-4 py-3 text-slate-950 outline-none transition @error('description') border-red-500 @else border-slate-200 @enderror"

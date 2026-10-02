@@ -208,23 +208,10 @@ Route::middleware('guest')->group(function () {
             }
 
 
-            if (!$user->hasActiveEmployerSubscription()) {
-                return redirect()->route(
-                    in_array(
-                        session('employer.selected_package'),
-                        ['basic', 'starter', 'business'],
-                        true
-                    )
-                        ? 'employer.payment'
-                        : 'employer.pricing'
-                );
-            }
-
-
-            return redirect()->route(
-                $user->hasCompletedEmployerProfile()
+            return redirect()->intended(
+                route($user->hasCompletedEmployerProfile()
                     ? 'employer.dashboard'
-                    : 'employer.profile'
+                    : 'employer.pricing')
             );
         }
 
@@ -703,24 +690,10 @@ Route::middleware('auth')->group(function () {
             }
 
 
-            if (!$user->hasActiveEmployerSubscription()) {
-
-                return redirect()->route(
-                    in_array(
-                        session('employer.selected_package'),
-                        ['basic', 'starter', 'business'],
-                        true
-                    )
-                        ? 'employer.payment'
-                        : 'employer.pricing'
-                );
-            }
-
-
-            return redirect()->route(
-                $user->hasCompletedEmployerProfile()
+            return redirect()->intended(
+                route($user->hasCompletedEmployerProfile()
                     ? 'employer.dashboard'
-                    : 'employer.profile'
+                    : 'employer.pricing')
             );
         }
 
@@ -765,16 +738,22 @@ Route::middleware('auth')->group(function () {
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/employer/payment', [
+        Route::get('/employer/payment/{package?}', [
             EmployerOnboardingController::class,
             'payment',
         ])->name('employer.payment');
 
 
-        Route::post('/employer/payment', [
+        Route::post('/employer/payment/orders', [
             EmployerOnboardingController::class,
-            'completePayment',
-        ])->name('employer.payment.complete');
+            'createPaymentOrder',
+        ])->name('employer.payment.order');
+
+
+        Route::get('/employer/payment/orders/{orderReference}', [
+            EmployerOnboardingController::class,
+            'paymentPending',
+        ])->name('employer.payment.pending');
 
 
         /*
@@ -895,23 +874,6 @@ Route::middleware('auth')->group(function () {
             );
 
 
-            $hasActivePlan = $user->hasActiveEmployerSubscription();
-
-
-            if (!$hasActivePlan) {
-
-                return redirect()->route(
-                    in_array(
-                        session('employer.selected_package'),
-                        ['basic', 'starter', 'business'],
-                        true
-                    )
-                        ? 'employer.payment'
-                        : 'employer.pricing'
-                );
-            }
-
-
             if (!$user->hasCompletedEmployerProfile()) {
                 return redirect()->route('employer.profile');
             }
@@ -922,6 +884,9 @@ Route::middleware('auth')->group(function () {
             $jobs = $employerProfile?->jobs()->get() ?? collect();
 
             $jobIds = $jobs->pluck('id');
+            $activeJobCount = $employerProfile->jobs()
+                ->publiclyVisible()
+                ->count();
 
 
             $applicationQuery = Application::whereIn(
@@ -930,11 +895,34 @@ Route::middleware('auth')->group(function () {
             );
 
 
+            $activeSubscription = $user->activeEmployerSubscription();
+            $subscription = $activeSubscription
+                ?? $user->latestSuccessfulEmployerSubscription();
+            $jobsUsed = $subscription
+                ? $user->employerSubscriptionCreditsUsed($subscription)
+                : 0;
+            $jobsRemaining = $subscription
+                ? max(0, $subscription->job_allowance - $jobsUsed)
+                : 0;
+            $isExpired = !$activeSubscription
+                && $subscription?->expires_at !== null
+                && $subscription->expires_at->isPast();
+            $isExhausted = $subscription !== null
+                && $jobsUsed >= $subscription->job_allowance;
+            $subscriptionStatus = !$subscription
+                ? 'none'
+                : ($isExpired ? 'expired' : ($isExhausted ? 'exhausted' : 'active'));
+            $subscriptionMessage = match (true) {
+                !$subscription => 'Choose a subscription plan to start posting jobs.',
+                $isExpired && $isExhausted => 'Your plan has expired and your posting limit has been reached. Renew or upgrade to continue posting jobs.',
+                $isExpired => 'Your subscription has expired. Renew or upgrade your plan to continue posting jobs.',
+                $isExhausted => 'Your job posting limit has been reached. Upgrade your plan to publish more jobs.',
+                default => null,
+            };
+
             return view('dashboard.employer', [
 
-                'activeJobCount' => $jobs
-                    ->where('status', 'published')
-                    ->count(),
+                'activeJobCount' => $activeJobCount,
 
                 'applicationCount' => $applicationQuery->count(),
 
@@ -942,11 +930,14 @@ Route::middleware('auth')->group(function () {
                     ->distinct('candidate_profile_id')
                     ->count('candidate_profile_id'),
 
-                'subscription' => $user->employerSubscriptions()
-                    ->where('status', 'successful')
-                    ->where('expires_at', '>', now())
-                    ->latest('expires_at')
-                    ->first(),
+                'subscription' => $subscription,
+                'subscriptionStatus' => $subscriptionStatus,
+                'subscriptionMessage' => $subscriptionMessage,
+                'jobsUsed' => $jobsUsed,
+                'jobsRemaining' => $jobsRemaining,
+                'usagePercentage' => $subscription && $subscription->job_allowance > 0
+                    ? min(100, (int) round($jobsUsed / $subscription->job_allowance * 100))
+                    : 0,
             ]);
 
         })->name('employer.dashboard');

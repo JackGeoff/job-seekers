@@ -1,8 +1,22 @@
 import Alpine from 'alpinejs';
-import './job-category-autocomplete.js';
+import { initializeCategoryDropdowns } from './job-category-autocomplete.js';
+import { initializeMultipleJobPosting } from './multiple-job-posting.js';
+
+const initializeDescriptionEditors = (root = document) => {
+    import('./job-description-editor.js').then(({ initializeJobDescriptionEditors }) => {
+        initializeJobDescriptionEditors(root);
+    });
+};
+
+initializeCategoryDropdowns();
+document.addEventListener('job-entry:added', (event) => {
+    initializeCategoryDropdowns(event.detail);
+    initializeDescriptionEditors(event.detail);
+});
+initializeMultipleJobPosting();
 
 if (document.querySelector('[data-job-description-editor]')) {
-    import('./job-description-editor.js');
+    initializeDescriptionEditors();
 }
 
 // Initialize Alpine.js

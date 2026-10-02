@@ -14,7 +14,7 @@ class EmployerProfileController extends Controller
 
         if (!$user->hasActiveEmployerSubscription()) {
             return redirect()->route($this->hasSelectedPlan() ? 'employer.payment' : 'employer.pricing')
-                ->with('error', 'Choose a plan and complete demo payment before setting up your company profile.');
+                ->with('error', 'Choose a subscription plan to set up your company profile.');
         }
 
         $profile = $user->employerProfile;
@@ -37,7 +37,7 @@ class EmployerProfileController extends Controller
 
         if (!$user->hasActiveEmployerSubscription()) {
             return redirect()->route($this->hasSelectedPlan() ? 'employer.payment' : 'employer.pricing')
-                ->with('error', 'Choose a plan and complete demo payment before setting up your company profile.');
+                ->with('error', 'Choose a subscription plan to set up your company profile.');
         }
 
         $validated = $request->validate([
@@ -59,6 +59,6 @@ class EmployerProfileController extends Controller
 
     private function hasSelectedPlan(): bool
     {
-        return in_array(session('employer.selected_package'), ['basic', 'starter', 'business'], true);
+        return in_array(session('employer.selected_package'), ['basic', 'starter', 'growth', 'business'], true);
     }
 }

@@ -100,6 +100,13 @@
 
             </div>
 
+            @if ($postingMessage)
+                <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900" role="status">
+                    <p>{{ $postingMessage }}</p>
+                    <a href="{{ route('employer.pricing') }}" class="mt-2 inline-block font-semibold underline underline-offset-2">Renew or upgrade plan</a>
+                </div>
+            @endif
+
 
             {{-- Validation errors --}}
             @if ($errors->any())
@@ -135,10 +142,29 @@
                 method="POST"
                 action="{{ route('employer.jobs.store') }}"
                 class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-brand-900/5 sm:p-8"
+                data-job-posting-form
             >
 
                 @csrf
 
+                <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-brand-50 px-4 py-3">
+                    <p class="text-sm font-semibold text-brand-900">{{ $remainingCredits }} job posting credits remaining</p>
+                    @if ($activeSubscription)
+                        <p class="text-sm text-slate-600">{{ ucfirst($activeSubscription->plan) }} plan</p>
+                    @endif
+                </div>
+
+                <div
+                    data-job-entries
+                    data-max-forms="{{ $maxJobForms }}"
+                    data-default-status="{{ $canPublish ? 'published' : 'draft' }}"
+                >
+                    <section data-job-entry data-index="0" class="mb-6 rounded-2xl border border-slate-200 p-4 sm:p-6">
+                        <div class="mb-6 flex items-center justify-between gap-4">
+                            <h2 data-job-number class="text-lg font-semibold text-slate-950">Job 1</h2>
+                        </div>
+                        <div data-job-entry-fields>
+                            <input type="hidden" name="submission_key" value="{{ old('jobs.0.submission_key', (string) \Illuminate\Support\Str::uuid()) }}">
 
                 {{-- Basic information --}}
                 <div>
@@ -173,14 +199,14 @@
                                 id="title"
                                 name="title"
                                 type="text"
-                                value="{{ old('title') }}"
+                                value="{{ old('jobs.0.title') }}"
                                 required
                                 maxlength="255"
                                 placeholder="e.g. Software Developer"
-                                class="auth-input h-12 w-full rounded-xl border bg-white px-4 text-slate-950 outline-none transition @error('title') border-red-500 @else border-slate-200 @enderror"
+                                class="auth-input h-12 w-full rounded-xl border bg-white px-4 text-slate-950 outline-none transition @error('jobs.0.title') border-red-500 @else border-slate-200 @enderror"
                             >
 
-                            @error('title')
+                            @error('jobs.0.title')
                                 <p class="mt-2 text-sm text-red-600">
                                     {{ $message }}
                                 </p>
@@ -192,7 +218,9 @@
                         {{-- Category --}}
                         @include('employer.jobs.partials.category-select', [
                             'categoryGroups' => $categoryGroups,
-                            'selectedCategory' => old('category', ''),
+                            'selectedCategory' => old('jobs.0.category', ''),
+                            'index' => 0,
+                            'categoryErrorKey' => 'jobs.0.category',
                         ])
 
 
@@ -201,7 +229,7 @@
 
                             @php
                                 $descriptionSanitizer = app(\App\Support\JobDescriptionSanitizer::class);
-                                $descriptionHtml = $descriptionSanitizer->sanitize(old('description'));
+                                $descriptionHtml = $descriptionSanitizer->sanitize(old('jobs.0.description'));
                                 $descriptionText = $descriptionSanitizer->plainText($descriptionHtml);
                             @endphp
 
@@ -225,6 +253,7 @@
                             <textarea
                                 id="description"
                                 name="description"
+                                data-job-description-source
                                 rows="8"
                                 required
                                 placeholder="Describe the role, responsibilities, expectations and what success looks like..."
@@ -236,7 +265,7 @@
                                 Minimum 50 characters. Use headings, lists and links to make the role easy to scan.
                             </p>
 
-                            @error('description')
+                            @error('jobs.0.description')
                                 <p class="mt-2 text-sm text-red-600">
                                     {{ $message }}
                                 </p>
@@ -282,14 +311,14 @@
                                 id="location"
                                 name="location"
                                 type="text"
-                                value="{{ old('location') }}"
+                                value="{{ old('jobs.0.location') }}"
                                 required
                                 maxlength="255"
                                 placeholder="e.g. Nairobi, Kenya"
-                                class="auth-input h-12 w-full rounded-xl border bg-white px-4 text-slate-950 outline-none transition @error('location') border-red-500 @else border-slate-200 @enderror"
+                                class="auth-input h-12 w-full rounded-xl border bg-white px-4 text-slate-950 outline-none transition @error('jobs.0.location') border-red-500 @else border-slate-200 @enderror"
                             >
 
-                            @error('location')
+                            @error('jobs.0.location')
                                 <p class="mt-2 text-sm text-red-600">
                                     {{ $message }}
                                 </p>
@@ -322,42 +351,42 @@
 
                                 <option
                                     value="full-time"
-                                    @selected(old('employment_type') === 'full-time')
+                                    @selected(old('jobs.0.employment_type') === 'full-time')
                                 >
                                     Full-time
                                 </option>
 
                                 <option
                                     value="part-time"
-                                    @selected(old('employment_type') === 'part-time')
+                                    @selected(old('jobs.0.employment_type') === 'part-time')
                                 >
                                     Part-time
                                 </option>
 
                                 <option
                                     value="contract"
-                                    @selected(old('employment_type') === 'contract')
+                                    @selected(old('jobs.0.employment_type') === 'contract')
                                 >
                                     Contract
                                 </option>
 
                                 <option
                                     value="temporary"
-                                    @selected(old('employment_type') === 'temporary')
+                                    @selected(old('jobs.0.employment_type') === 'temporary')
                                 >
                                     Temporary
                                 </option>
 
                                 <option
                                     value="internship"
-                                    @selected(old('employment_type') === 'internship')
+                                    @selected(old('jobs.0.employment_type') === 'internship')
                                 >
                                     Internship
                                 </option>
 
                             </select>
 
-                            @error('employment_type')
+                            @error('jobs.0.employment_type')
                                 <p class="mt-2 text-sm text-red-600">
                                     {{ $message }}
                                 </p>
@@ -408,35 +437,35 @@
 
                                 <option
                                     value="KES"
-                                    @selected(old('salary_currency', 'KES') === 'KES')
+                                    @selected(old('jobs.0.salary_currency', 'KES') === 'KES')
                                 >
                                     KES
                                 </option>
 
                                 <option
                                     value="USD"
-                                    @selected(old('salary_currency') === 'USD')
+                                    @selected(old('jobs.0.salary_currency') === 'USD')
                                 >
                                     USD
                                 </option>
 
                                 <option
                                     value="EUR"
-                                    @selected(old('salary_currency') === 'EUR')
+                                    @selected(old('jobs.0.salary_currency') === 'EUR')
                                 >
                                     EUR
                                 </option>
 
                                 <option
                                     value="GBP"
-                                    @selected(old('salary_currency') === 'GBP')
+                                    @selected(old('jobs.0.salary_currency') === 'GBP')
                                 >
                                     GBP
                                 </option>
 
                             </select>
 
-                            @error('salary_currency')
+                            @error('jobs.0.salary_currency')
                                 <p class="mt-2 text-sm text-red-600">
                                     {{ $message }}
                                 </p>
@@ -461,12 +490,12 @@
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                value="{{ old('salary_min') }}"
+                                value="{{ old('jobs.0.salary_min') }}"
                                 placeholder="e.g. 50000"
                                 class="auth-input h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-950 outline-none transition"
                             >
 
-                            @error('salary_min')
+                            @error('jobs.0.salary_min')
                                 <p class="mt-2 text-sm text-red-600">
                                     {{ $message }}
                                 </p>
@@ -491,12 +520,12 @@
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                value="{{ old('salary_max') }}"
+                                value="{{ old('jobs.0.salary_max') }}"
                                 placeholder="e.g. 80000"
                                 class="auth-input h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-950 outline-none transition"
                             >
 
-                            @error('salary_max')
+                            @error('jobs.0.salary_max')
                                 <p class="mt-2 text-sm text-red-600">
                                     {{ $message }}
                                 </p>
@@ -539,11 +568,11 @@
                             name="application_deadline"
                             type="date"
                             min="{{ now()->format('Y-m-d') }}"
-                            value="{{ old('application_deadline') }}"
+                            value="{{ old('jobs.0.application_deadline') }}"
                             class="auth-input h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-950 outline-none transition"
                         >
 
-                        @error('application_deadline')
+                        @error('jobs.0.application_deadline')
                             <p class="mt-2 text-sm text-red-600">
                                 {{ $message }}
                             </p>
@@ -582,13 +611,13 @@
                             id="external_application_url"
                             name="external_application_url"
                             type="url"
-                            value="{{ old('external_application_url') }}"
+                            value="{{ old('jobs.0.external_application_url') }}"
                             maxlength="2048"
                             placeholder="https://example.com/apply"
-                            class="auth-input h-12 w-full rounded-xl border bg-white px-4 text-slate-950 outline-none transition @error('external_application_url') border-red-500 @else border-slate-200 @enderror"
+                            class="auth-input h-12 w-full rounded-xl border bg-white px-4 text-slate-950 outline-none transition @error('jobs.0.external_application_url') border-red-500 @else border-slate-200 @enderror"
                         >
 
-                        @error('external_application_url')
+                        @error('jobs.0.external_application_url')
                             <p class="mt-2 text-sm text-red-600">
                                 {{ $message }}
                             </p>
@@ -625,7 +654,7 @@
                                 name="status"
                                 value="draft"
                                 class="peer sr-only"
-                                @checked(old('status') === 'draft')
+                                @checked(old('jobs.0.status', $defaultJobStatus) === 'draft')
                             >
 
                             <div class="rounded-2xl border border-slate-200 p-4 text-slate-900 transition hover:border-accent-600 hover:bg-accent-500 hover:text-white peer-checked:border-accent-600 peer-checked:bg-accent-500 peer-checked:text-white">
@@ -651,7 +680,8 @@
                                 name="status"
                                 value="published"
                                 class="peer sr-only"
-                                @checked(old('status', 'published') === 'published')
+                                @checked(old('jobs.0.status', $defaultJobStatus) === 'published')
+                                @disabled(!$canPublish)
                             >
 
                             <div class="rounded-2xl border border-slate-200 p-4 text-slate-900 transition hover:border-accent-600 hover:bg-accent-500 hover:text-white peer-checked:border-accent-600 peer-checked:bg-accent-500 peer-checked:text-white">
@@ -671,13 +701,24 @@
                     </div>
 
 
-                    @error('status')
+                    @error('jobs.0.status')
                         <p class="mt-2 text-sm text-red-600">
                             {{ $message }}
                         </p>
                     @enderror
 
                 </div>
+
+                        </div>
+                    </section>
+                </div>
+
+                <div class="mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-6">
+                    <p class="text-sm text-slate-600">Add up to {{ $maxJobForms }} job forms using your remaining posting credits. Drafts do not use credits until published.</p>
+                    <button type="button" data-add-job @disabled($maxJobForms <= 1) class="rounded-xl border border-brand-200 px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50">+ Add Job</button>
+                </div>
+
+                <script type="application/json" data-old-job-entries>@json(old('jobs', []))</script>
 
 
                 {{-- Actions --}}
@@ -694,7 +735,7 @@
                         type="submit"
                         class="brand-btn accent-btn w-full sm:w-auto"
                     >
-                        Create Job
+                        Create Jobs
                     </button>
 
                 </div>

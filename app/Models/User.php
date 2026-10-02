@@ -43,6 +43,45 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(EmployerSubscription::class);
     }
 
+    public function activeEmployerSubscription(): ?EmployerSubscription
+    {
+        return $this->employerSubscriptions()
+            ->where('status', 'successful')
+            ->where(function ($query) {
+                $query
+                    ->whereNull('starts_at')
+                    ->orWhere('starts_at', '<=', now());
+            })
+            ->where('expires_at', '>', now())
+            ->latest('expires_at')
+            ->first();
+    }
+
+    public function latestSuccessfulEmployerSubscription(): ?EmployerSubscription
+    {
+        return $this->employerSubscriptions()
+            ->where('status', 'successful')
+            ->latest('created_at')
+            ->first();
+    }
+
+    public function employerSubscriptionCreditsUsed(EmployerSubscription $subscription): int
+    {
+        $assignedJobs = $subscription->jobs()->count();
+        $employerProfile = $this->employerProfile;
+
+        if (!$employerProfile) {
+            return $assignedJobs;
+        }
+
+        $legacyPublishedJobs = $employerProfile->jobs()
+            ->whereNull('subscription_id')
+            ->whereIn('status', ['published', 'closed'])
+            ->count();
+
+        return $assignedJobs + $legacyPublishedJobs;
+    }
+
     protected static function booted(): void
     {
         static::creating(function (self $user): void {
@@ -54,15 +93,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function hasActiveEmployerSubscription(): bool
     {
-        return $this->employerSubscriptions()
-            ->where('status', 'successful')
-            ->where(function ($query) {
-                $query
-                    ->whereNull('starts_at')
-                    ->orWhere('starts_at', '<=', now());
-            })
-            ->where('expires_at', '>', now())
-            ->exists();
+        return $this->activeEmployerSubscription() !== null;
     }
 
     public function hasCompletedEmployerProfile(): bool

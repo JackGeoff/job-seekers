@@ -13,7 +13,9 @@ class ContentController extends Controller
 
     public function pricing(): View
     {
-        return view('content.pricing');
+        return view('content.pricing', [
+            'packages' => config('employer_plans', []),
+        ]);
     }
 
     public function blog(): View

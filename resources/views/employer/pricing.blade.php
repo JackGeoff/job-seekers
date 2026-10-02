@@ -23,13 +23,14 @@
                 </div>
             @else
                 <div class="mt-10">
-                    <div class="grid grid-cols-1 gap-5 lg:grid-cols-4">
+                    <div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                         @foreach ($packages as $packageKey => $package)
-                            <article class="group flex h-full flex-col rounded-3xl border {{ $packageKey === 'business' ? 'border-accent-400 ring-2 ring-accent-400/20' : 'border-brand-100' }} bg-white p-6 shadow-lg shadow-brand-900/5 transition duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-900/10 sm:p-7">
-                                <div class="mb-4 h-6">
-                            @if ($packageKey === 'business')
-                                    <span class="inline-flex w-fit rounded-full bg-accent-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-accent-700">Most popular</span>
-                            @endif
+                            <a href="{{ $packageKey === 'enterprise' ? route('employer.enterprise') : route('employer.payment', ['package' => $packageKey]) }}"
+                               class="group flex h-full flex-col rounded-2xl border {{ !empty($package['most_popular']) ? 'border-accent-400 ring-2 ring-accent-400/20' : 'border-brand-100' }} bg-white p-6 text-left shadow-lg shadow-brand-900/5 transition duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-900/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600 sm:p-7">
+                                <div class="mb-4 flex h-7 items-start">
+                                    @if (!empty($package['most_popular']))
+                                        <span class="inline-flex w-fit rounded-full bg-accent-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-accent-700">Most Popular</span>
+                                    @endif
                                 </div>
                             <div class="flex items-start justify-between gap-4">
                                 <div>
@@ -50,16 +51,12 @@
                             </div>
                             <div class="mt-auto pt-8">
                                 @if ($packageKey === 'enterprise')
-                                    <a href="{{ route('employer.enterprise') }}" class="brand-btn w-full">Talk to Us <span class="ml-2" aria-hidden="true">→</span></a>
+                                    <span class="brand-btn w-full">Contact Us <span class="ml-2" aria-hidden="true">→</span></span>
                                 @else
-                                    <form method="POST" action="{{ route('employer.pricing.select') }}">
-                                        @csrf
-                                        <input type="hidden" name="package" value="{{ $packageKey }}">
-                                        <button type="submit" class="brand-btn w-full">Choose {{ $package['name'] }} <span class="ml-2" aria-hidden="true">→</span></button>
-                                    </form>
+                                    <span class="brand-btn w-full">Choose Plan <span class="ml-2" aria-hidden="true">→</span></span>
                                 @endif
                             </div>
-                            </article>
+                            </a>
                         @endforeach
                     </div>
                 </div>
