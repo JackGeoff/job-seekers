@@ -317,15 +317,6 @@ class EmployerJobController extends Controller
 
         $this->validateDescriptionText($validated['description']);
 
-        if (
-            $validated['status'] === 'draft'
-            && ($job->status !== 'draft' || $job->subscription_id !== null)
-        ) {
-            throw ValidationException::withMessages([
-                'status' => 'A previously published job cannot be changed back to a draft.',
-            ]);
-        }
-
         if ($validated['status'] === 'closed' && $job->subscription_id === null && $job->status === 'draft') {
             throw ValidationException::withMessages([
                 'status' => 'A draft must be published before it can be closed.',

@@ -9,7 +9,7 @@
             <div class="mt-7 max-w-3xl">
                 <p class="text-sm font-semibold uppercase tracking-[0.16em] text-accent-600">Checkout preparation</p>
                 <h1 class="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">Choose a payment method</h1>
-                <p class="mt-3 text-base leading-7 text-slate-600">No payment will be taken and no subscription will be activated until a payment provider is integrated and confirms payment.</p>
+                <p class="mt-3 text-base leading-7 text-slate-600">Choose how to pay for {{ $package['name'] }}. Your subscription starts only after the payment is verified.</p>
             </div>
 
             @if ($errors->any())
@@ -20,16 +20,23 @@
                 <div>
                     <h2 class="text-lg font-semibold text-slate-950">Payment method</h2>
                     <div class="mt-4 grid gap-4 sm:grid-cols-3">
-                        @foreach ([['mpesa', 'M-Pesa', 'STK Push integration will be connected in the payment phase.'], ['card', 'Visa / Mastercard', 'Card processing will be connected in the payment phase.'], ['bank_transfer', 'Bank transfer', 'Creates an order pending manual verification.']] as [$method, $label, $description])
+                        @foreach ([['mpesa', 'M-Pesa', 'Receive a payment prompt on your phone and approve it with your M-Pesa PIN.'], ['card', 'Visa / Mastercard', 'Pay securely through Paystack Checkout.'], ['bank_transfer', 'Bank transfer', 'Creates an order pending manual verification.']] as [$method, $label, $description])
                             <form method="POST" action="{{ route('employer.payment.order') }}" class="flex">
                                 @csrf
                                 <input type="hidden" name="package" value="{{ $packageKey }}">
                                 <input type="hidden" name="payment_method" value="{{ $method }}">
-                                <button type="submit" class="flex min-h-48 w-full flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-brand-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
+                                <div class="flex min-h-52 w-full flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-brand-300 hover:shadow-md">
                                     <span class="text-base font-semibold text-slate-950">{{ $label }}</span>
                                     <span class="mt-2 text-sm leading-6 text-slate-600">{{ $description }}</span>
-                                    <span class="mt-auto pt-5 text-sm font-semibold text-brand-700">Continue <span aria-hidden="true">→</span></span>
-                                </button>
+                                    @if ($method === 'mpesa')
+                                        <label for="mpesa_phone" class="mt-4 text-xs font-semibold text-slate-700">M-Pesa phone number</label>
+                                        <input id="mpesa_phone" name="mpesa_phone" type="tel" inputmode="tel" autocomplete="tel" required placeholder="0712 345 678" value="{{ old('mpesa_phone', $companyProfile?->phone ?? $account->phone) }}" class="auth-input mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm">
+                                        @error('mpesa_phone')
+                                            <span class="mt-1 text-xs text-red-700">{{ $message }}</span>
+                                        @enderror
+                                    @endif
+                                    <button type="submit" class="brand-btn accent-btn mt-auto w-full justify-center">Continue <span class="ml-2" aria-hidden="true">→</span></button>
+                                </div>
                             </form>
                         @endforeach
                     </div>

@@ -20,30 +20,23 @@ class EmployerSubscriptionFlowTest extends TestCase
     {
         $user = $this->createEmployerUser();
 
-        foreach (['mpesa', 'card', 'bank_transfer'] as $method) {
-            $response = $this->actingAs($user)->post(route('employer.payment.order'), [
-                'package' => 'growth',
-                'payment_method' => $method,
-                'amount' => 1,
-                'job_allowance' => 999,
-            ]);
+        $response = $this->actingAs($user)->post(route('employer.payment.order'), [
+            'package' => 'growth',
+            'payment_method' => 'bank_transfer',
+            'amount' => 1,
+            'job_allowance' => 999,
+        ]);
 
-            $order = EmployerPaymentOrder::query()
-                ->where('payment_method', $method)
-                ->firstOrFail();
+        $order = EmployerPaymentOrder::query()->firstOrFail();
+        $response->assertRedirect(route('employer.payment.pending', $order->order_reference));
+        $this->assertSame(20000, $order->amount);
+        $this->assertSame(20, $order->job_allowance);
+        $this->assertSame('pending', $order->status);
 
-            $response->assertRedirect(route('employer.payment.pending', $order->order_reference));
-            $this->assertSame(20000, $order->amount);
-            $this->assertSame(20, $order->job_allowance);
-            $this->assertSame('pending', $order->status);
-
-            $pendingPage = $this->get(route('employer.payment.pending', $order->order_reference));
-            $pendingPage->assertOk()->assertSee('has not activated a subscription');
-
-            if ($method === 'bank_transfer') {
-                $pendingPage->assertSee('1003249278')->assertSee('manual verification');
-            }
-        }
+        $this->get(route('employer.payment.pending', $order->order_reference))
+            ->assertOk()
+            ->assertSee('1003249278')
+            ->assertSee('manual verification');
 
         $this->assertDatabaseMissing('employer_subscriptions', ['user_id' => $user->id]);
     }
@@ -152,6 +145,33 @@ class EmployerSubscriptionFlowTest extends TestCase
             ->assertSessionHasErrors('jobs');
 
         $this->assertSame(1, $profile->jobs()->count());
+    }
+
+    public function test_published_job_can_be_changed_to_draft_without_restoring_its_credit(): void
+    {
+        [$user, $profile, $subscription] = $this->createEmployerWithSubscription(allowance: 2);
+        $this->actingAs($user)
+            ->post(route('employer.jobs.store'), [
+                'jobs' => [$this->jobPayload('Software Engineering & Development')],
+            ])
+            ->assertRedirect(route('employer.jobs.index'));
+
+        $job = $profile->jobs()->firstOrFail();
+        $subscriptionId = $job->subscription_id;
+        $this->put(route('employer.jobs.update', $job), [
+            'title' => $job->title,
+            'description' => $job->description,
+            'category' => $job->category,
+            'location' => $job->location,
+            'employment_type' => $job->employment_type,
+            'salary_currency' => $job->salary_currency,
+            'status' => 'draft',
+        ])->assertRedirect(route('employer.jobs.index'));
+
+        $job->refresh();
+        $this->assertSame('draft', $job->status);
+        $this->assertSame($subscriptionId, $job->subscription_id);
+        $this->assertSame(1, $user->employerSubscriptionCreditsUsed($subscription));
     }
 
     private function createEmployerWithSubscription(

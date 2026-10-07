@@ -10,6 +10,8 @@ use App\Http\Controllers\EmployerJobController;
 use App\Http\Controllers\EmployerOnboardingController;
 use App\Http\Controllers\EmployerProfileController;
 use App\Http\Controllers\EmployerRegistrationController;
+use App\Http\Controllers\PaystackPaymentController;
+use App\Http\Controllers\PaystackWebhookController;
 use App\Http\Controllers\JobController;
 use App\Models\Application;
 use App\Models\Job;
@@ -41,6 +43,9 @@ Route::get('/', function () {
         'jobs' => $jobs,
     ]);
 })->name('home');
+
+Route::post('/paystack/webhook', PaystackWebhookController::class)
+    ->name('paystack.webhook');
 
 
 Route::get('/jobs', [
@@ -745,15 +750,39 @@ Route::middleware('auth')->group(function () {
 
 
         Route::post('/employer/payment/orders', [
-            EmployerOnboardingController::class,
-            'createPaymentOrder',
+            PaystackPaymentController::class,
+            'createOrder',
         ])->name('employer.payment.order');
+
+
+        Route::post('/employer/payment/orders/{order}/pay', [
+            PaystackPaymentController::class,
+            'initiate',
+        ])->name('employer.payment.initiate');
+
+
+        Route::post('/employer/payment/orders/{order}/retry', [
+            PaystackPaymentController::class,
+            'retry',
+        ])->name('employer.payment.retry');
+
+
+        Route::post('/employer/payment/orders/{order}/check', [
+            PaystackPaymentController::class,
+            'checkStatus',
+        ])->name('employer.payment.check');
 
 
         Route::get('/employer/payment/orders/{orderReference}', [
             EmployerOnboardingController::class,
             'paymentPending',
         ])->name('employer.payment.pending');
+
+
+        Route::get('/paystack/callback', [
+            PaystackPaymentController::class,
+            'callback',
+        ])->name('paystack.callback');
 
 
         /*
